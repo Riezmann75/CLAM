@@ -52,6 +52,6 @@ if __name__ == "__main__":
         try:
             download_svs(file_id, save_dir)
             with open(os.path.join(save_dir, "saved_ids.txt"), "a") as f:
-                f.write(f"{file_name}\n")
+                f.write(f"{file_id}\n")
         except Exception as e:
-            print(f"Failed to download {file_name} with error {e}")
+            print(f"Failed to download file {file_id} with error {e}")
