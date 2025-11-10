@@ -16,11 +16,5 @@ conda activate clam_latest
 #check
 conda info --envs
 
-nvidia-smi -L
-echo $CUDA_VISIBLE_DEVICES
-
-TORCH_LOGS="+dynamo"
-TORCHDYNAMO_VERBOSE=1
-
 #run the file
 python3 python ./lib/download_wsi.py --save_dir "./wsi_files/BLCA" --cleaned_csv_path "dataset_csv/tcga_blca_all_clean.csv" --manifest_txt_path "dataset_csv/gdc_manifest.2025-11-08.140931.txt"
