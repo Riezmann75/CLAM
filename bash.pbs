@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -l walltime=50:00:00
-#PBS -l select=1:ncpus=1:mem=200MB
+#PBS -l select=1:ncpus=4:mem=200GB
 #PBS -q normal
 #PBS -P 12004268
 #PBS -N multimodal_survival_analysis
@@ -17,4 +17,4 @@ conda activate clam_latest
 conda info --envs
 
 #run the file
-python3 ./lib/download_wsi.py --save_dir "./wsi_files/BLCA" --cleaned_csv_path "dataset_csv/tcga_blca_all_clean.csv" --manifest_txt_path "dataset_csv/gdc_manifest.2025-11-08.140931.txt"
+python3 ./lib/download_wsi.py --save_dir "./wsi_files/BLCA" --cleaned_csv_path "dataset_csv/tcga_blca_all_clean.csv" --manifest_txt_path "dataset_csv/gdc_manifest.2025-11-08.140931.txt" --num_cpus 4
