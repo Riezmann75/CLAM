@@ -1,0 +1,27 @@
+
+# conda environments:
+#
+base                   /data/projects/12004268/miniforge3
+.evalconda             /data/projects/12004268/miniforge3/envs/.evalconda
+testenv                /data/projects/12004268/miniforge3/envs/testenv
+clam_latest          * /home/users/ntu/giabaoca/.conda/envs/clam_latest
+survival_analysis      /home/users/ntu/giabaoca/.conda/envs/survival_analysis
+
+/home/users/ntu/giabaoca/.conda/envs/clam_latest/lib/python3.10/site-packages/numpy/_core/fromnumeric.py:57: FutureWarning: 'DataFrame.swapaxes' is deprecated and will be removed in a future version. Please use 'DataFrame.transpose' instead.
+  return bound(*args, **kwds)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Resource Usage on 2025-11-10 13:57:21.029457:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	JobId: 12285430.pbs101
+	Project: 12004268
+	Exit Status: 271
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	NCPUs: Requested(4), Used(4)
+	CPU Time Used: 00:00:07
+	Memory: Requested(200gb), Used(389888kb)
+	Vmem Used: 2380112kb
+	Walltime: Requested(50:00:00), Used(00:00:36)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	Execution Nodes Used: (x1002c6s5b1n1:ncpus=4:mem=209715200kb)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	No GPU-related information available for this job.
