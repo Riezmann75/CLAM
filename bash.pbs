@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -l walltime=50:00:00
+#PBS -l select=1:ngpus=0
+#PBS -q normal
+#PBS -P 12004268
+#PBS -N multimodal_survival_analysis
+#PBS -j oe
+#PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/out-run.txt
+
+cd /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM #need to change directory to the project folder first
+
+#activating conda environment
+source activate base
+conda activate clam_latest
+
+#check
+conda info --envs
+
+nvidia-smi -L
+echo $CUDA_VISIBLE_DEVICES
+
+TORCH_LOGS="+dynamo"
+TORCHDYNAMO_VERBOSE=1
+
+#run the file
+python3 python ./lib/download_wsi.py --save_dir "./wsi_files/BLCA" --cleaned_csv_path "dataset_csv/tcga_blca_all_clean.csv" --manifest_txt_path "dataset_csv/gdc_manifest.2025-11-08.140931.txt"
