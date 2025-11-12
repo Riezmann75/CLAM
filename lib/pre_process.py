@@ -10,8 +10,8 @@ from torch.utils.data import DataLoader
 
 
 class PatientDataset(Dataset):
-    def __init__(self, case_ids: list[str], h5_files: list[str], X, y):
-        self.case_ids = case_ids
+    def __init__(self, slide_ids: list[str], h5_files: list[str], X, y):
+        self.slide_ids = slide_ids
         self.h5_files = h5_files
         self.X = X
         self.y = y
@@ -20,23 +20,23 @@ class PatientDataset(Dataset):
         self.feature_cols = [
             col for col in self.X.columns if col not in self.clinical_cols
         ]
-        self.feature_cols.remove("case_id")
+        self.feature_cols.remove("slide_id")
         self.patch_features = []
         for h5_file in h5_files:
             assert os.path.exists(h5_file), f"H5 file {h5_file} does not exist."
-        for case_id in case_ids:
+        for slide_id in slide_ids:
             # load tensor from extracted features
-            extracted_path = f"wsi_patches/BLCA/features/{case_id}.pt"
+            extracted_path = f"wsi_patches/BLCA/features/{slide_id}.pt"
             features = torch.load(extracted_path)
             self.patch_features.append(features)
 
     def __len__(self):
-        return len(self.case_ids)
+        return len(self.slide_ids)
 
     def __getitem__(self, idx):
         patch_features = self.patch_features[idx]
-        case_id = self.case_ids[idx]
-        patient = self.X[self.X["case_id"] == case_id].iloc[0]
+        slide_id = self.slide_ids[idx]
+        patient = self.X[self.X["slide_id"] == slide_id].iloc[0]
         patient = patient[self.feature_cols]
         patient = torch.tensor(patient.values.astype(float))
         return (patient, patch_features), torch.tensor(
@@ -62,7 +62,7 @@ def collate_fn(batch):
     return patients, patches, clinical_outcomes, mask
 
 
-def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str]):
+def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str], batch_size=4):
     df = pd.read_csv(clean_csv_path)
     df_filtered = df.drop(columns=["site", "oncotree_code", "train"])
     # get the patients in file_ids
@@ -70,12 +70,10 @@ def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str]):
     slide_ids = [
         file_id for file_id in os.listdir(wsi_path) if file_id.endswith(".svs")
     ]
-    case_ids = [slide_id.split("-01Z")[0] for slide_id in slide_ids]
-    case_ids = list(set(case_ids))
     df_filtered = df_filtered[df_filtered["slide_id"].isin(slide_ids)]
     clinical_cols = ["survival_months", "censorship"]
     feature_cols = [col for col in df_filtered.columns if col not in clinical_cols]
-    feature_cols.remove("slide_id")
+    feature_cols.remove("case_id")
     categorical_cols = ["is_female"]
     numeric_cols = []
     for col in feature_cols:
@@ -92,54 +90,58 @@ def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str]):
         X_train, y_train, test_size=0.1, random_state=42
     )
 
-    train_case_ids = X_train["case_id"].to_list()
-    test_case_ids = X_test["case_id"].to_list()
-    validate_case_ids = X_validate["case_id"].to_list()
+    train_slide_ids = X_train["slide_id"].to_list()
+    train_slide_ids = [slide_id.split(".h5")[0] for slide_id in train_slide_ids]
+    test_slide_ids = X_test["slide_id"].to_list()
+    test_slide_ids = [slide_id.split(".h5")[0] for slide_id in test_slide_ids]
+    validate_slide_ids = X_validate["slide_id"].to_list()
+    validate_slide_ids = [slide_id.split(".h5")[0] for slide_id in validate_slide_ids]
+
     train_h5_files = [
         os.path.join(h5_dir, h5_file)
         for h5_file in h5_files
-        if h5_file.split("-01Z")[0] in train_case_ids
+        if h5_file in train_slide_ids
     ]
     test_h5_files = [
         os.path.join(h5_dir, h5_file)
         for h5_file in h5_files
-        if h5_file.split("-01Z")[0] in test_case_ids
+        if h5_file in test_slide_ids
     ]
     validate_h5_files = [
         os.path.join(h5_dir, h5_file)
         for h5_file in h5_files
-        if h5_file.split("-01Z")[0] in validate_case_ids
+        if h5_file in validate_slide_ids
     ]
 
     train_dataset = PatientDataset(
-        train_case_ids,
+        train_slide_ids,
         train_h5_files,
         X_train.reset_index(drop=True),
         y_train.reset_index(drop=True),
     )
 
     test_dataset = PatientDataset(
-        test_case_ids,
+        test_slide_ids,
         test_h5_files,
         X_test.reset_index(drop=True),
         y_test.reset_index(drop=True),
     )
 
     validate_dataset = PatientDataset(
-        validate_case_ids,
+        validate_slide_ids,
         validate_h5_files,
         X_validate.reset_index(drop=True),
         y_validate.reset_index(drop=True),
     )
 
     train_loader = DataLoader(
-        train_dataset, batch_size=4, shuffle=True, collate_fn=collate_fn
+        train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn
     )
     test_loader = DataLoader(
-        test_dataset, batch_size=4, shuffle=False, collate_fn=collate_fn
+        test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn
     )
     validate_loader = DataLoader(
-        validate_dataset, batch_size=4, shuffle=False, collate_fn=collate_fn
+        validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn
     )
 
     return {

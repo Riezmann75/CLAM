@@ -22,7 +22,8 @@ class FeatureExtractor(nn.Module):
 
 if __name__ == "__main__":
     import torch
-    device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = FeatureExtractor().to(device)
     h5_file_path = "wsi_patches/BLCA/patches"
     h5_files = os.listdir(h5_file_path)
@@ -42,9 +43,11 @@ if __name__ == "__main__":
         features = []
         for batch in batches:
             with torch.no_grad():
-                batch_features = model(batch.to(device))  # Shape: (32, 2048), last batch may be smaller
+                batch_features = model(
+                    batch.to(device)
+                )  # Shape: (32, 2048), last batch may be smaller
             features.append(batch_features.cpu())
         features = torch.cat(features, dim=0)  # Shape: (#patches, 2048)
-        case_id = h5_file.split("-01Z")[0]
-        torch.save(features, f"wsi_patches/BLCA/features/{case_id}.pt")
+        slide_id = h5_file.split(".h5")[0]
+        torch.save(features, f"wsi_patches/BLCA/features/{slide_id}.pt")
         print(len(patches), features.shape)  # Expected output shape: (#patches, 2048)
