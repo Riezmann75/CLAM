@@ -71,7 +71,8 @@ if __name__ == "__main__":
     os.makedirs(save_dir, exist_ok=True)
 
     df = pd.read_csv(cleaned_csv_path)
-    open(os.path.join(save_dir, "saved_ids.txt"), "w").close()
+    if not os.path.exists(os.path.join(save_dir, "saved_ids.txt")):
+        open(os.path.join(save_dir, "saved_ids.txt"), "w").close()
     manifest_file = pd.read_csv(manifest_txt_path, sep="\t")
     slide_ids = df["slide_id"]
     selected_manifest = manifest_file[
