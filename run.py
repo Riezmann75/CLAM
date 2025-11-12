@@ -9,7 +9,7 @@ from lib.models import NLL, GenomicEncoder, PathologicalEncoder, SurvivalModel
 from lib.pre_process import load_dataset
 from lib.train import train_model_with_config
 from lib.utils import decorate_optimizer
-
+from lib.plot import plot_top_configs
 
 h5_dir = "wsi_patches/BLCA/patches/"
 clean_csv_path = "dataset_csv/tcga_blca_all_clean.csv"
@@ -34,10 +34,11 @@ num_epochs = 10
 
 search_space = SearchSpace.model_validate(
     {
-        "learning_rates": [0.0001],
+        "learning_rates": np.arange(1e-4, 1e-3, step=2e-4).tolist(),
         "weight_decays": [1e-4],
         "optimizers": [
             decorate_optimizer(torch.optim.Adam),
+            decorate_optimizer(torch.optim.SGD),
         ],
         "num_epochs": [10],
     }
@@ -54,6 +55,8 @@ grid_searcher(
     train_fn=train_model_with_config,
     loss_fn=NLL(),
     train_loader=processed_data["train_loader"],
-    validation_loader=processed_data["val_loader"],
+    validation_loader=processed_data["validate_loader"],
     test_loader=processed_data["test_loader"],
 )
+
+plot_top_configs(experiment_path=os.path.join(os.getcwd(), "experiments"))

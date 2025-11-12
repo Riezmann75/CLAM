@@ -103,7 +103,7 @@ def train_model_with_config(
     collected_preds = []
     clinical_outcomes_list = []
     with torch.no_grad():
-        for patient, patches, clinical_outcomes, mask in train_loader:
+        for patient, patches, clinical_outcomes, mask in test_loader:
             patches = patches.to(device)
             patient = patient.to(device)
             clinical_outcomes = clinical_outcomes.to(device)
@@ -111,9 +111,10 @@ def train_model_with_config(
             preds = model(patches, patient, mask)
             collected_preds.append(preds.cpu())
             clinical_outcomes_list.append(clinical_outcomes.cpu())
-            clinical_outcomes_list = torch.stack(clinical_outcomes_list)
+            clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
             clinical_outcomes_list = clinical_outcomes_list.squeeze(dim=1)
-            collected_preds = torch.stack(collected_preds)
+            collected_preds = torch.concat(collected_preds, dim=0)
+            collected_preds = collected_preds.squeeze()
             clinical_outcomes_list = clinical_outcomes_list.squeeze()
             c_index_value = c_index(
                 collected_preds,
@@ -126,7 +127,7 @@ def train_model_with_config(
     with torch.no_grad():
         collected_preds = []
         clinical_outcomes_list = []
-        for patient, patches, clinical_outcomes, mask in test_loader:
+        for patient, patches, clinical_outcomes, mask in train_loader:
             patches = patches.to(device)
             patient = patient.to(device)
             clinical_outcomes = clinical_outcomes.to(device)
@@ -134,13 +135,14 @@ def train_model_with_config(
             preds = model(patches, patient, mask)
             collected_preds.append(preds.cpu())
             clinical_outcomes_list.append(clinical_outcomes.cpu())
-            clinical_outcomes_list = torch.stack(clinical_outcomes_list)
-            clinical_outcomes_list = clinical_outcomes_list.squeeze(dim=1)
-            collected_preds = torch.stack(collected_preds)
-            clinical_outcomes_list = clinical_outcomes_list.squeeze()
-            train_c_index_value = c_index(
-                collected_preds,
-                clinical_outcomes_list[:, 0],
-                clinical_outcomes_list[:, 1],
-            )
+        clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
+        clinical_outcomes_list = clinical_outcomes_list.squeeze()
+        collected_preds = torch.concat(collected_preds, dim=0)
+        collected_preds = collected_preds.squeeze()
+        clinical_outcomes_list = clinical_outcomes_list.squeeze()
+        train_c_index_value = c_index(
+            collected_preds,
+            clinical_outcomes_list[:, 0],
+            clinical_outcomes_list[:, 1],
+        )
     return avg_losses, val_losses, c_index_value, train_c_index_value
