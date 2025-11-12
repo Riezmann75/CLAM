@@ -9,18 +9,81 @@ survival_analysis      /home/users/ntu/giabaoca/.conda/envs/survival_analysis
 
 /home/users/ntu/giabaoca/.conda/envs/clam_latest/lib/python3.10/site-packages/numpy/_core/fromnumeric.py:57: FutureWarning: 'DataFrame.swapaxes' is deprecated and will be removed in a future version. Please use 'DataFrame.transpose' instead.
   return bound(*args, **kwds)
+Failed to download file 34db838e-ad0e-46dd-961a-da26bce79427 with error ('Connection broken: IncompleteRead(309549184 bytes read, 1860482829 more expected)', IncompleteRead(309549184 bytes read, 1860482829 more expected))
+Failed to download file e8ce5641-a19a-43c8-9c89-2ee6a70a2511 with error ('Connection broken: IncompleteRead(574985088 bytes read, 2126225945 more expected)', IncompleteRead(574985088 bytes read, 2126225945 more expected))
+Failed to download file 78dd90eb-551f-4e06-adae-78d0c11312e8 with error ('Connection broken: IncompleteRead(355869248 bytes read, 516565379 more expected)', IncompleteRead(355869248 bytes read, 516565379 more expected))
+Failed to download file 471a8da1-a4a0-4d44-9c73-4f64207f2eba with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 9d67f77c-5c54-4f11-a371-0309027c81fe with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file c490567c-9c1e-4c6e-a8cf-dc59fa18ab71 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 599c2ffd-dcba-4146-8ddf-787a24334a78 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file d8f6e145-eb97-4224-a691-e8ceff2f3885 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file fe033dd1-dd2a-4386-88cc-e3c5bdac6b64 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 225d95fe-9db2-4378-a407-deda523b50b1 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 20d94d8e-67b1-42dc-b191-624335cc60d2 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 3caa2d31-55fc-4117-9c53-c15624e8927a with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file efa9faae-f049-44e7-8e20-0bf6d9faeb45 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 54aff8ec-3b62-461c-8b7a-684049220218 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 21dae48c-7058-4c61-af6d-b14d584c4a6a with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file b05f150e-2830-4848-a5e5-ef122cce89af with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 79a09a98-422c-45da-b62b-5cac9f5e67db with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 34363f68-b82c-4e5e-8e91-3b05dedfc60b with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 214b9807-9e79-4f93-b963-0c03f1785472 with error ('Connection broken: IncompleteRead(416259328 bytes read, 2012994049 more expected)', IncompleteRead(416259328 bytes read, 2012994049 more expected))
+Failed to download file df7db7fc-a397-4304-8227-18bab186c9d4 with error ('Connection broken: IncompleteRead(631681280 bytes read, 808541231 more expected)', IncompleteRead(631681280 bytes read, 808541231 more expected))
+Failed to download file b6bd14fc-7e2c-41d2-aae3-7d510b58c105 with error ('Connection broken: IncompleteRead(250365056 bytes read, 2021217811 more expected)', IncompleteRead(250365056 bytes read, 2021217811 more expected))
+Failed to download file 4c7e155c-706f-4d7a-8470-bbe91a262c8f with error ('Connection broken: IncompleteRead(633741888 bytes read, 854731237 more expected)', IncompleteRead(633741888 bytes read, 854731237 more expected))
+Failed to download file 7c0c25e4-2f77-416c-9e3a-ab0870a57540 with error ('Connection broken: IncompleteRead(2517777152 bytes read, 193415779 more expected)', IncompleteRead(2517777152 bytes read, 193415779 more expected))
+Failed to download file 3f478839-9a81-40d3-b8b6-6fcc1f135bb6 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 6971ceaf-cb55-42b0-9880-effc1010e4a5 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 94a7b0d7-dd0b-43ac-a199-3ba9a7a31635 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file fbcc6c1e-5e07-42cb-8a52-5ed5d2b02e8a with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 5a2226a9-1f63-48dc-b5d9-3b2aabe08fe6 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 96b9a01f-f30f-45a3-b912-56c272f186f2 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file e4aaffe6-5149-4f39-aaff-1a787d8d82cb with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 408e09dd-0787-4438-9d94-7163b1056a9b with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 37a099ab-14d1-41c1-aa40-c823bba83dce with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 569b33bb-c018-46a8-a1a0-0d1065c79572 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 142a7ae4-8995-465f-b4bd-a57c9af36920 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 85c7bc3e-9132-44dd-b5aa-18d7259f30ef with error ('Connection broken: IncompleteRead(1650250560 bytes read, 1006478993 more expected)', IncompleteRead(1650250560 bytes read, 1006478993 more expected))
+Failed to download file 842d3982-82c6-4897-a03e-1c79c2128e70 with error ('Connection broken: IncompleteRead(2365660544 bytes read, 101143285 more expected)', IncompleteRead(2365660544 bytes read, 101143285 more expected))
+Failed to download file 9301c7d5-c6db-4b59-aa61-0cc9be85e400 with error ('Connection broken: IncompleteRead(1188657856 bytes read, 396338753 more expected)', IncompleteRead(1188657856 bytes read, 396338753 more expected))
+Failed to download file d4676c59-a957-460b-8aa8-aec44409536d with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 5866d3b8-dd86-4677-bc99-9763a11e4fac with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file acc9e18a-0cdb-4f6e-9ae3-4c5673fd1658 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file e5709924-83c1-4c7e-9229-2bb6751880a0 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 8b8300b2-ec9f-44e9-873d-f228f6dece1d with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 4ee8849c-3b39-4eb6-944c-044659bd19dd with error ('Connection broken: IncompleteRead(738307136 bytes read, 579959707 more expected)', IncompleteRead(738307136 bytes read, 579959707 more expected))
+Failed to download file f469e280-5dfb-481c-b95d-c10a1b8c3898 with error ('Connection broken: IncompleteRead(32505856 bytes read, 1789358651 more expected)', IncompleteRead(32505856 bytes read, 1789358651 more expected))
+Failed to download file 4244a47d-75c9-4423-bf88-bb7cbdfe5e96 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 22d878be-b86b-4e56-b445-4f5d8b70f1d4 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 7d330313-7c0f-40fc-9d8f-f0d2bdf86d25 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 23be87d1-1a62-4b49-b15e-eb268195efb6 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file a8143700-f0e4-4cbb-88a0-41fa455cef30 with error ('Connection broken: IncompleteRead(2506717888 bytes read, 232680242 more expected)', IncompleteRead(2506717888 bytes read, 232680242 more expected))
+Failed to download file 0f58ae76-9875-4861-8d25-19de0b5c827e with error ('Connection broken: IncompleteRead(1035419584 bytes read, 277617397 more expected)', IncompleteRead(1035419584 bytes read, 277617397 more expected))
+Failed to download file d9a17af6-828f-4268-b96b-ec9fe8c2c0bf with error ('Connection broken: IncompleteRead(421392576 bytes read, 1419034457 more expected)', IncompleteRead(421392576 bytes read, 1419034457 more expected))
+Failed to download file 9b64edbe-36cb-4fcb-a72c-5fa1e1b64608 with error ('Connection broken: IncompleteRead(478589184 bytes read, 1388666143 more expected)', IncompleteRead(478589184 bytes read, 1388666143 more expected))
+Failed to download file 039371b9-2d73-4eaa-bf51-9958c41aa177 with error ('Connection broken: IncompleteRead(1254937408 bytes read, 652917425 more expected)', IncompleteRead(1254937408 bytes read, 652917425 more expected))
+Failed to download file 8618d5cf-1b09-4dcb-bad3-cdc79ef43e48 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 5694fbd5-eaae-43b0-aa2f-16093c5866b0 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 6aed3989-2700-4c98-a07b-892848345c16 with error ('Connection broken: IncompleteRead(164736064 bytes read, 1179616897 more expected)', IncompleteRead(164736064 bytes read, 1179616897 more expected))
+Failed to download file 4f280b9e-4f07-4e7e-a15b-679537caecba with error ('Connection broken: IncompleteRead(1515411584 bytes read, 191948819 more expected)', IncompleteRead(1515411584 bytes read, 191948819 more expected))
+Failed to download file dc4e5f1c-b2c3-47d6-a6b2-7a685f226c25 with error ('Connection broken: IncompleteRead(1426794240 bytes read, 451740417 more expected)', IncompleteRead(1426794240 bytes read, 451740417 more expected))
+Failed to download file a6b073a9-9226-4907-9edb-90070c68ae60 with error ('Connection broken: IncompleteRead(196960768 bytes read, 660424806 more expected)', IncompleteRead(196960768 bytes read, 660424806 more expected))
+Failed to download file da29b24a-5d25-4604-83af-687d47a7d59b with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file 6471c335-4600-49dc-99c5-4da1f56b1f97 with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+Failed to download file a56fb127-7155-465f-9173-d6096acd475c with error ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+All downloads completed.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-			Resource Usage on 2025-11-10 13:57:21.029457:
+			Resource Usage on 2025-11-11 21:35:32.427170:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	JobId: 12285430.pbs101
+	JobId: 12285537.pbs101
 	Project: 12004268
-	Exit Status: 271
+	Exit Status: 0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	NCPUs: Requested(4), Used(4)
-	CPU Time Used: 00:00:07
-	Memory: Requested(200gb), Used(389888kb)
-	Vmem Used: 2380112kb
-	Walltime: Requested(50:00:00), Used(00:00:36)
+	CPU Time Used: 00:52:52
+	Memory: Requested(200gb), Used(11436732kb)
+	Vmem Used: 12560640kb
+	Walltime: Requested(50:00:00), Used(31:30:36)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	Execution Nodes Used: (x1002c6s5b1n1:ncpus=4:mem=209715200kb)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
