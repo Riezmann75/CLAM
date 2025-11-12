@@ -21,7 +21,7 @@ class PatientDataset(Dataset):
             col for col in self.X.columns if col not in self.clinical_cols
         ]
         self.feature_cols.remove("case_id")
-        self.featuyre_cols.remove("slide_id")
+        self.feature_cols.remove("slide_id")
         self.patch_features = []
         for h5_file in h5_files:
             assert os.path.exists(h5_file), f"H5 file {h5_file} does not exist."
@@ -63,8 +63,8 @@ def collate_fn(batch):
     return patients, patches, clinical_outcomes, mask
 
 
-def load_dataset(h5_dir: str, h5_files: list[str]):
-    df = pd.read_csv("tcga_blca_all_clean.csv")
+def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str]):
+    df = pd.read_csv(clean_csv_path)
     df_filtered = df.drop(columns=["site", "oncotree_code", "train"])
     # get the patients in file_ids
     wsi_path = "./wsi_files/BLCA/"
