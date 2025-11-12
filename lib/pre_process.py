@@ -21,7 +21,6 @@ class PatientDataset(Dataset):
             col for col in self.X.columns if col not in self.clinical_cols
         ]
         self.feature_cols.remove("case_id")
-        self.feature_cols.remove("slide_id")
         self.patch_features = []
         for h5_file in h5_files:
             assert os.path.exists(h5_file), f"H5 file {h5_file} does not exist."
@@ -134,13 +133,13 @@ def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str]):
     )
 
     train_loader = DataLoader(
-        train_dataset, batch_size=8, shuffle=True, collate_fn=collate_fn
+        train_dataset, batch_size=4, shuffle=True, collate_fn=collate_fn
     )
     test_loader = DataLoader(
-        test_dataset, batch_size=8, shuffle=False, collate_fn=collate_fn
+        test_dataset, batch_size=4, shuffle=False, collate_fn=collate_fn
     )
     validate_loader = DataLoader(
-        validate_dataset, batch_size=8, shuffle=False, collate_fn=collate_fn
+        validate_dataset, batch_size=4, shuffle=False, collate_fn=collate_fn
     )
 
     return {

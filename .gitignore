@@ -3,3 +3,4 @@ __pycache__/
 notebooks
 wsi_files/
 wsi_patches/
+experiments/
