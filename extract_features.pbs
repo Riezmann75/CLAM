@@ -16,5 +16,10 @@ conda activate clam_latest
 #check
 conda info --envs
 
+# create patches
+python create_patches_fp.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA --patch_size 224 --seg --patch --stitch --patch_level 2 
+
 #run the file
 python ./lib/feature_extractor.py
+
+
