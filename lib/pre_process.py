@@ -36,6 +36,7 @@ class PatientDataset(Dataset):
     def __getitem__(self, idx):
         patch_features = self.patch_features[idx]
         slide_id = self.slide_ids[idx]
+        slide_id = slide_id + ".svs"
         patient = self.X[self.X["slide_id"] == slide_id].iloc[0]
         patient = patient[self.feature_cols]
         patient = torch.tensor(patient.values.astype(float))
@@ -91,11 +92,11 @@ def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str], batch_si
     )
 
     train_slide_ids = X_train["slide_id"].to_list()
-    train_slide_ids = [slide_id.split(".h5")[0] for slide_id in train_slide_ids]
+    train_slide_ids = [slide_id.split(".svs")[0] for slide_id in train_slide_ids]
     test_slide_ids = X_test["slide_id"].to_list()
-    test_slide_ids = [slide_id.split(".h5")[0] for slide_id in test_slide_ids]
+    test_slide_ids = [slide_id.split(".svs")[0] for slide_id in test_slide_ids]
     validate_slide_ids = X_validate["slide_id"].to_list()
-    validate_slide_ids = [slide_id.split(".h5")[0] for slide_id in validate_slide_ids]
+    validate_slide_ids = [slide_id.split(".svs")[0] for slide_id in validate_slide_ids]
 
     train_h5_files = [
         os.path.join(h5_dir, h5_file)

@@ -15,8 +15,6 @@ h5_dir = "wsi_patches/BLCA/patches/"
 clean_csv_path = "dataset_csv/tcga_blca_all_clean.csv"
 h5_files = os.listdir(h5_dir)
 
-case_ids = [h5_file.split("-01Z")[0] for h5_file in h5_files]
-
 processed_data = load_dataset(clean_csv_path, h5_dir, h5_files)
 
 path_enc = PathologicalEncoder(hidden_dim=128)
