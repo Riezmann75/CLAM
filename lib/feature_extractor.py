@@ -74,4 +74,4 @@ if __name__ == "__main__":
         features = torch.cat(features, dim=0)  # Shape: (#patches, 2048)
         slide_id = h5_file.split(".h5")[0]
         torch.save(features, f"{args.output_dir}/{slide_id}.pt")
-        print(len(patches), features.shape)  # Expected output shape: (#patches, 2048)
+        # print(len(patches), features.shape)  # Expected output shape: (#patches, 2048)
