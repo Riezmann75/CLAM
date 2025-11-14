@@ -42,23 +42,32 @@ if __name__ == "__main__":
         default="wsi_patches/BLCA/features",
         help="Directory to save extracted features",
     )
+    parser.add_argument(
+        "--patch_level",
+        type=int,
+        default=2,
+        help="Magnification level of patches",
+    )
     args = parser.parse_args()
 
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
-
+    extracted_slides = os.listdir(args.output_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = FeatureExtractor().to(device)
     h5_file_path = args.h5_dir
     h5_files = os.listdir(h5_file_path)
     for h5_file in tqdm(h5_files):
+        slide_id = h5_file.split(".h5")[0]
+        if slide_id + ".pt" in extracted_slides:
+            continue
         data = h5py.File(os.path.join(h5_file_path, h5_file), "r")
         wsi = openslide.open_slide(
             f"{args.wsi_dir}/{h5_file.split('/')[-1].split('.h5')[0]}.svs"
         )
         patches = []
         for coord in data["coords"][:]:
-            patch = wsi.read_region(coord, 2, (224, 224)).convert("RGB")
+            patch = wsi.read_region(coord, args.patch_level, (224, 224)).convert("RGB")
             tensor_patch = transforms.ToTensor()(patch)
             patches.append(tensor_patch)
         patches = torch.stack(patches)  # Shape: (#patches, 3, 224, 224)
@@ -72,6 +81,5 @@ if __name__ == "__main__":
                 )  # Shape: (32, 2048), last batch may be smaller
             features.append(batch_features.cpu())
         features = torch.cat(features, dim=0)  # Shape: (#patches, 2048)
-        slide_id = h5_file.split(".h5")[0]
         torch.save(features, f"{args.output_dir}/{slide_id}.pt")
         # print(len(patches), features.shape)  # Expected output shape: (#patches, 2048)
