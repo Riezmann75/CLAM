@@ -42,6 +42,12 @@ if __name__ == "__main__":
         default="wsi_patches/BLCA/features",
         help="Directory to save extracted features",
     )
+    parser.add_argument(
+        "--patch_level",
+        type=int,
+        default=2,
+        help="Magnification level of patches",
+    )
     args = parser.parse_args()
 
     if not os.path.exists(args.output_dir):
@@ -61,7 +67,7 @@ if __name__ == "__main__":
         )
         patches = []
         for coord in data["coords"][:]:
-            patch = wsi.read_region(coord, 2, (224, 224)).convert("RGB")
+            patch = wsi.read_region(coord, args.patch_level, (224, 224)).convert("RGB")
             tensor_patch = transforms.ToTensor()(patch)
             patches.append(tensor_patch)
         patches = torch.stack(patches)  # Shape: (#patches, 3, 224, 224)
