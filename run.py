@@ -11,11 +11,19 @@ from lib.train import train_model_with_config
 from lib.utils import decorate_optimizer
 from lib.plot import plot_top_configs
 
+import argparse
+
+parser = argparse.ArgumentParser(description="Run the survival model training with grid search.")
+parser.add_argument("--batch_size", type=int, default=8, help="Batch size for data loading")
+args = parser.parse_args()
+
+batch_size = args.batch_size
+
 h5_dir = "wsi_patches/BLCA/patches/"
 clean_csv_path = "dataset_csv/tcga_blca_all_clean.csv"
 h5_files = os.listdir(h5_dir)
 
-processed_data = load_dataset(clean_csv_path, h5_dir, h5_files)
+processed_data = load_dataset(clean_csv_path, h5_dir, h5_files, batch_size=batch_size)
 
 path_enc = PathologicalEncoder(hidden_dim=128)
 geno_enc = GenomicEncoder(
