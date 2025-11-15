@@ -1,6 +1,6 @@
 #!/bin/bash
-#PBS -l walltime=1:00:00
-#PBS -l select=1:ncpus=1:ngpus=1:mem=20GB
+#PBS -l walltime=3:00:00
+#PBS -l select=1:ncpus=1:ngpus=1:mem=32GB
 #PBS -q normal
 #PBS -P 12004268
 #PBS -N multimodal_survival_analysis
@@ -16,4 +16,4 @@ conda activate clam_latest
 #check
 conda info --envs
 
-python run.py
+python run.py --batch_size 8
