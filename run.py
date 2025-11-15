@@ -24,21 +24,19 @@ geno_enc = GenomicEncoder(
     numeric_cols=processed_data["numeric_cols"],
     hidden_dim=128,
 )
-device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-lr = 0.0005
 loss = NLL()
-num_epochs = 10
 
 search_space = SearchSpace.model_validate(
     {
         "learning_rates": np.arange(1e-4, 1e-3, step=2e-4).tolist(),
-        "weight_decays": [1e-4],
+        "weight_decays": [1e-4, 1e-3, 1e-2],
         "optimizers": [
             decorate_optimizer(torch.optim.Adam),
             decorate_optimizer(torch.optim.SGD),
         ],
-        "num_epochs": [10],
+        "num_epochs": [50, 100],
     }
 )
 
