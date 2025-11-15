@@ -1,0 +1,19 @@
+#!/bin/bash
+#PBS -l walltime=1:00:00
+#PBS -l select=1:ncpus=1:ngpus=1:mem=20GB
+#PBS -q normal
+#PBS -P 12004268
+#PBS -N multimodal_survival_analysis
+#PBS -j oe
+#PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/out-run.txt
+
+cd /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM #need to change directory to the project folder first
+
+#activating conda environment
+source activate base
+conda activate clam_latest
+
+#check
+conda info --envs
+
+python run.py
