@@ -40,7 +40,7 @@ geno_enc = GenomicEncoder(
     numeric_cols=processed_data["numeric_cols"],
     hidden_dim=hidden_dim,
 )
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 loss = NLL()
 
