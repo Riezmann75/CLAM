@@ -136,13 +136,13 @@ def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str], batch_si
     )
 
     train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn
+        train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, num_workers=2
     )
     test_loader = DataLoader(
-        test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn
+        test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=2
     )
     validate_loader = DataLoader(
-        validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn
+        validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=2
     )
 
     return {

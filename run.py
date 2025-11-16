@@ -13,11 +13,19 @@ from lib.plot import plot_top_configs
 
 import argparse
 
-parser = argparse.ArgumentParser(description="Run the survival model training with grid search.")
-parser.add_argument("--batch_size", type=int, default=8, help="Batch size for data loading")
+parser = argparse.ArgumentParser(
+    description="Run the survival model training with grid search."
+)
+parser.add_argument(
+    "--batch_size", type=int, default=8, help="Batch size for data loading"
+)
+parser.add_argument(
+    "--hidden_dim", type=int, default=128, help="Hidden dimension size for encoders"
+)
 args = parser.parse_args()
 
 batch_size = args.batch_size
+hidden_dim = args.hidden_dim
 
 h5_dir = "wsi_patches/BLCA/patches/"
 clean_csv_path = "dataset_csv/tcga_blca_all_clean.csv"
@@ -25,14 +33,14 @@ h5_files = os.listdir(h5_dir)
 
 processed_data = load_dataset(clean_csv_path, h5_dir, h5_files, batch_size=batch_size)
 
-path_enc = PathologicalEncoder(hidden_dim=128)
+path_enc = PathologicalEncoder(hidden_dim=hidden_dim)
 geno_enc = GenomicEncoder(
     df=processed_data["filtered_df"],
     categorical_cols=processed_data["categorical_cols"],
     numeric_cols=processed_data["numeric_cols"],
-    hidden_dim=128,
+    hidden_dim=hidden_dim,
 )
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
 
 loss = NLL()
 
@@ -52,9 +60,9 @@ grid_searcher = GridSearch(search_space, device=device)
 grid_searcher(
     Model=SurvivalModel,
     model_init_args={
-        "path_encoder": path_enc,
-        "geno_encoder": geno_enc,
-        "hidden_dim": 128,
+        "path_encoder": path_enc.to(device),
+        "geno_encoder": geno_enc.to(device),
+        "hidden_dim": hidden_dim,
     },
     train_fn=train_model_with_config,
     loss_fn=NLL(),

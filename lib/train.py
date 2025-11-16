@@ -1,3 +1,4 @@
+import time
 import torch
 from lib.exception import StopTrainingError
 import numpy as np
@@ -41,11 +42,12 @@ def train_loop(dataloader, model, loss_fn, optimizer, device=None, required_grad
     #     optimizer.step()
 
     for patient, patches, clinical_outcomes, mask in dataloader:
-        optimizer.zero_grad()
+        # t0 = time.time()
         patches = patches.to(device)
         patient = patient.to(device)
         clinical_outcomes = clinical_outcomes.to(device)
         mask = ~mask.to(device)  # invert mask for key_padding_mask
+        # t1 = time.time()
         preds = model(patches, patient, mask)
         failure_times = clinical_outcomes[:, 0]
         is_observed = clinical_outcomes[:, 1]
@@ -58,7 +60,9 @@ def train_loop(dataloader, model, loss_fn, optimizer, device=None, required_grad
         if required_grad:
             optimizer.zero_grad()
             loss.backward()
+            # t2 = time.time()
             optimizer.step()
+            # print(f"Data load+transfer: {t1 - t0:.4f}s | GPU compute: {t2 - t1:.4f}s")
 
     return np.mean(losses)
 
@@ -111,16 +115,16 @@ def train_model_with_config(
             preds = model(patches, patient, mask)
             collected_preds.append(preds.cpu())
             clinical_outcomes_list.append(clinical_outcomes.cpu())
-            clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
-            clinical_outcomes_list = clinical_outcomes_list.squeeze(dim=1)
-            collected_preds = torch.concat(collected_preds, dim=0)
-            collected_preds = collected_preds.squeeze()
-            clinical_outcomes_list = clinical_outcomes_list.squeeze()
-            c_index_value = c_index(
-                collected_preds,
-                clinical_outcomes_list[:, 0],
-                clinical_outcomes_list[:, 1],
-            )
+        clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
+        clinical_outcomes_list = clinical_outcomes_list.squeeze(dim=1)
+        collected_preds = torch.concat(collected_preds, dim=0)
+        collected_preds = collected_preds.squeeze()
+        clinical_outcomes_list = clinical_outcomes_list.squeeze()
+        c_index_value = c_index(
+            collected_preds,
+            clinical_outcomes_list[:, 0],
+            clinical_outcomes_list[:, 1],
+        )
 
     # cindex on train set
     model.eval()
