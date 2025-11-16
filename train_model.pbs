@@ -1,6 +1,6 @@
 #!/bin/bash
-#PBS -l walltime=2:00:00
-#PBS -l select=1:ncpus=1:ngpus=1:mem=32GB
+#PBS -l walltime=10:00:00
+#PBS -l select=1:ngpus=1:mem=32GB
 #PBS -q normal
 #PBS -P 12004268
 #PBS -N multimodal_survival_analysis
