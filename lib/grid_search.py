@@ -26,6 +26,7 @@ class GridSearch:
         self.device = device
 
     def __call__(self, Model: nn.Module, train_fn, model_init_args=None, **kwargs):
+
         for optimizer in self.optimizers:
             for lr in self.learning_rates:
                 for weight_decay in self.weight_decays:
