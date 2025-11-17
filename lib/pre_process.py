@@ -85,10 +85,10 @@ def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str], batch_si
     y = df_filtered[clinical_cols]
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
+        X, y, test_size=0.2, random_state=42, stratify=y["censorship"]
     )
     X_train, X_validate, y_train, y_validate = train_test_split(
-        X_train, y_train, test_size=0.1, random_state=42
+        X_train, y_train, test_size=0.1, random_state=42, stratify=y_train["censorship"]
     )
 
     train_slide_ids = X_train["slide_id"].to_list()
@@ -136,13 +136,25 @@ def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str], batch_si
     )
 
     train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, num_workers=2
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        collate_fn=collate_fn,
+        num_workers=2,
     )
     test_loader = DataLoader(
-        test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=2
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        collate_fn=collate_fn,
+        num_workers=2,
     )
     validate_loader = DataLoader(
-        validate_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, num_workers=2
+        validate_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        collate_fn=collate_fn,
+        num_workers=2,
     )
 
     return {
