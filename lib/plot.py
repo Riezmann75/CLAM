@@ -40,7 +40,7 @@ def plot_training_curves(current_path, result_logs, y_lim=None, num_cols=2):
                         range(1, len(val_losses) + 1), val_losses, marker="o"
                     )
                     axes[i, j].set_title(
-                        f"Optimizer: {optimizer}, LR: {lr:.4f}, weight_decay: {weight_decay}, Test C-index: {test_c_index:.4f}, Train C-index: {train_c_index:.4f}",
+                        f"Optimizer: {optimizer}, LR: {lr}, weight_decay: {weight_decay}, Test C-index: {test_c_index:.4f}, Train C-index: {train_c_index:.4f}",
                         size=10,
                         pad=10,
                     )
