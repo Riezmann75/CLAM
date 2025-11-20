@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -l walltime=1:00:00
-#PBS -l select=1:ncpus=4:ngpus=1:mem=20GB
+#PBS -l select=1:ncpus=1:ngpus=1:mem=20GB
 #PBS -q normal
 #PBS -P 12004268
 #PBS -N multimodal_survival_analysis
@@ -17,7 +17,7 @@ conda activate clam_latest
 conda info --envs
 
 # create patches
-python create_patches_fp.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA --patch_size 224 --seg --patch --stitch --patch_level 2 
+# python create_patches_fp.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA --patch_size 224 --seg --patch --stitch --patch_level 2 
 
 #run the file
 python ./lib/feature_extractor.py
