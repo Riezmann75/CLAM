@@ -7,6 +7,9 @@ from tqdm import tqdm
 import argparse
 import torch
 
+import torch
+from transformers import AutoImageProcessor, ViTModel
+
 
 class FeatureExtractor(nn.Module):
     def __init__(self):
@@ -17,8 +20,17 @@ class FeatureExtractor(nn.Module):
 
     def forward(self, x):
         # shape x: (batch_size, 3, 224, 224)
-        x = self.features(x)
-        x = x.view(x.size(0), -1)  # Flatten the output, shape: (batch_size, 2048)
+
+        image_processor = AutoImageProcessor.from_pretrained("owkin/phikon")
+        model = ViTModel.from_pretrained("owkin/phikon", add_pooling_layer=False)
+
+        x = image_processor(x, return_tensors="pt")
+        with torch.no_grad():
+            outputs = model(**x)
+            x = outputs.last_hidden_state[:, 0, :]  # (batch_size, 768) shape
+
+        # x = self.features(x)
+        # x = x.view(x.size(0), -1)  # Flatten the output, shape: (batch_size, 2048)
         return x
 
 
@@ -78,8 +90,10 @@ if __name__ == "__main__":
             with torch.no_grad():
                 batch_features = model(
                     batch.to(device)
-                )  # Shape: (32, 2048), last batch may be smaller
+                )  # Shape: (32, hidden_dim), last batch may be smaller
             features.append(batch_features.cpu())
-        features = torch.cat(features, dim=0)  # Shape: (#patches, 2048)
+        features = torch.cat(features, dim=0)  # Shape: (#patches, hidden_dim)
         torch.save(features, f"{args.output_dir}/{slide_id}.pt")
-        # print(len(patches), features.shape)  # Expected output shape: (#patches, 2048)
+        print(
+            len(patches), features.shape
+        )  # Expected output shape: (#patches, hidden_dim)
