@@ -15,18 +15,19 @@ class FeatureExtractor(nn.Module):
     def __init__(self):
         super(FeatureExtractor, self).__init__()
         # Remove the final fully connected layer
+        self.image_processor = AutoImageProcessor.from_pretrained(
+            "owkin/phikon", use_fast=True
+        )
+        self.model = ViTModel.from_pretrained("owkin/phikon", add_pooling_layer=False)
         self.resnet50 = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
         self.features = nn.Sequential(*list(self.resnet50.children())[:-1])
 
     def forward(self, x):
         # shape x: (batch_size, 3, 224, 224)
 
-        image_processor = AutoImageProcessor.from_pretrained("owkin/phikon")
-        model = ViTModel.from_pretrained("owkin/phikon", add_pooling_layer=False)
-
-        x = image_processor(x, return_tensors="pt")
+        x = self.image_processor(x, return_tensors="pt")
         with torch.no_grad():
-            outputs = model(**x)
+            outputs = self.model(**x)
             x = outputs.last_hidden_state[:, 0, :]  # (batch_size, 768) shape
 
         # x = self.features(x)
