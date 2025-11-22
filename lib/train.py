@@ -108,12 +108,12 @@ def train_model_with_config(
     collected_preds = []
     clinical_outcomes_list = []
     with torch.no_grad():
-        for patient, patches, clinical_outcomes, mask in test_loader:
+        for patient, patches, coordinates, clinical_outcomes, mask in test_loader:
             patches = patches.to(device)
             patient = patient.to(device)
             clinical_outcomes = clinical_outcomes.to(device)
             mask = ~mask.to(device)  # invert mask for key_padding_mask
-            preds = model(patches, patient, mask)
+            preds = model(patches, patient, coordinates, mask)
             collected_preds.append(preds.cpu())
             clinical_outcomes_list.append(clinical_outcomes.cpu())
         clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
@@ -132,12 +132,12 @@ def train_model_with_config(
     with torch.no_grad():
         collected_preds = []
         clinical_outcomes_list = []
-        for patient, patches, clinical_outcomes, mask in train_loader:
+        for patient, patches, coordinates, clinical_outcomes, mask in train_loader:
             patches = patches.to(device)
             patient = patient.to(device)
             clinical_outcomes = clinical_outcomes.to(device)
             mask = ~mask.to(device)  # invert mask for key_padding_mask
-            preds = model(patches, patient, mask)
+            preds = model(patches, patient, coordinates, mask)
             collected_preds.append(preds.cpu())
             clinical_outcomes_list.append(clinical_outcomes.cpu())
         clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
