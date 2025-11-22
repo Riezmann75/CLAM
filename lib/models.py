@@ -36,8 +36,8 @@ class PositionalEncoder(nn.Module):
         # coordinates shape:  #batch * #patches * 2
         x = coordinates[:, :, 0]  # shape:  #batch * #patches
         y = coordinates[:, :, 1]  # shape:  #batch * #patches
-        x_norm = x / self.max_width  * self.scale # normalize to [0, 1]
-        y_norm = y / self.max_height * self.scale # normalize to [0, 1]
+        x_norm = x / self.max_width  * self.scale # normalize to [0, 2*pi]
+        y_norm = y / self.max_height * self.scale # normalize to [0, 2*pi]
         # div term has shape (dim/2,)
         div_term_x = self.temperature ** (
             2 * torch.arange(0, self.dim_x, 2, device=coordinates.device) / self.dim_x
