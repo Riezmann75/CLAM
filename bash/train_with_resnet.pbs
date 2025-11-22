@@ -16,4 +16,4 @@ conda activate clam_latest
 #check
 conda info --envs
 
-python run.py --batch_size 16 --hidden_dim 128 --feature_dir wsi_patches/BLCA/features/BLCA_resnet50 --h5_dir wsi_patches/BLCA/patches/ --clean_csv_path dataset_csv/tcga_blca_all_clean.csv --encoder resnet
+python run.py --batch_size 16 --hidden_dim 128 --feature_dir wsi_patches/BLCA/features/BLCA_resnet18 --h5_dir wsi_patches/BLCA/patches/ --clean_csv_path dataset_csv/tcga_blca_all_clean.csv --encoder resnet
