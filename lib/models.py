@@ -28,14 +28,17 @@ class ImageEncoder(nn.Module):
     def __init__(self, hidden_dim: int = 128):
         super(ImageEncoder, self).__init__()
         self.hidden_dim = hidden_dim
+        self.net = nn.Sequential(
+            nn.LazyLinear(1024),
+            nn.ReLU(),
+            nn.LazyLinear(512),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.LazyLinear(hidden_dim),
+        )
 
     def forward(self, x):
-        x = nn.LazyLinear(1024)(x)
-        x = nn.ReLU()(x)
-        x = nn.LazyLinear(512)(x)
-        x = nn.ReLU()(x)
-        x = nn.Dropout(0.2)(x)
-        x = nn.LazyLinear(self.hidden_dim)(x)
+        x = self.net(x)
         return x
 
 
