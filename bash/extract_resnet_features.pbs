@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -l walltime=6:00:00
 #PBS -l select=1:ncpus=1:ngpus=1:mem=20GB
-#PBS -q normal
+#PBS -q ai
 #PBS -P 12004268
 #PBS -N multimodal_survival_analysis
 #PBS -j oe
@@ -20,6 +20,7 @@ conda info --envs
 # python create_patches_fp.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA --patch_size 224 --seg --patch --stitch --patch_level 2 
 
 #run the file
-python ./lib/feature_extractor.py --output_dir wsi_patches/BLCA/features/BLCA_resnet50 --patch_level 2 --feature_extractor resnet50
+python ./lib/feature_extractor.py --output_dir wsi_patches/BLCA/features/BLCA_resnet18 --patch_level 2 --feature_extractor resnet18
 # python ./lib/feature_extractor.py --output_dir ./features/BLCA_vit --h5_dir ./wsi_patches/BLCA --patch_level 2 --feature_extractor vit
 
+    

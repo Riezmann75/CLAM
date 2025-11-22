@@ -28,17 +28,17 @@ class ViTFeatureExtractor(nn.Module):
         return x
 
 
-class ResNet50FeatureExtractor(nn.Module):
+class ResNet18FeatureExtractor(nn.Module):
     def __init__(self):
-        super(ResNet50FeatureExtractor, self).__init__()
-        self.resnet50 = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+        super(ResNet18FeatureExtractor, self).__init__()
+        self.resnet18 = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
         self.features = nn.Sequential(
-            *list(self.resnet50.children())[:6]
+            *list(self.resnet18.children())[:6]
         )  # stop before layer 3
 
     def forward(self, x):
         # shape x: (batch_size, 3, 224, 224)
-        x = self.features(x)  # batch_size * 512 * 28 * 28
+        x = self.features(x)  # batch_size * 128 * 28 * 28
         return x
 
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     if args.feature_extractor == "vit":
         model = ViTFeatureExtractor().to(device)
     else:
-        model = ResNet50FeatureExtractor().to(device)
+        model = ResNet18FeatureExtractor().to(device)
     h5_file_path = args.h5_dir
     h5_files = os.listdir(h5_file_path)
     for h5_file in tqdm(h5_files):
