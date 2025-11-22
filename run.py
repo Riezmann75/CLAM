@@ -1,10 +1,16 @@
-
 import numpy as np
 import torch
 
 from lib.grid_search import GridSearch, SearchSpace
 from lib.grid_search import SearchSpace
-from lib.models import NLL, GenomicEncoder, ResnetEncoder, SurvivalModel
+from lib.models import (
+    NLL,
+    GenomicEncoder,
+    ImageEncoder,
+    ImageEncoder,
+    ResnetEncoder,
+    SurvivalModel,
+)
 from lib.pre_process import load_dataset
 from lib.train import train_model_with_config
 from lib.utils import decorate_optimizer
@@ -38,6 +44,12 @@ parser.add_argument(
     default="dataset_csv/tcga_blca_all_clean.csv",
     help="Path to the cleaned CSV file",
 )
+parser.add_argument(
+    "--encoder",
+    choices=["resnet", "vit"],
+    default="resnet",
+    help="Type of path encoder to use",
+)
 
 args = parser.parse_args()
 
@@ -46,6 +58,12 @@ hidden_dim = args.hidden_dim
 features_dir = args.feature_dir
 h5_dir = args.h5_dir
 clean_csv_path = args.clean_csv_path
+encoder_type = args.encoder
+
+if "resnet" in encoder_type:
+    assert "resnet" in features_dir, "Feature directory does not match encoder type"
+elif "vit" in encoder_type:
+    assert "vit" in features_dir, "Feature directory does not match encoder type"
 
 processed_data = load_dataset(
     clean_csv_path=clean_csv_path,
@@ -54,7 +72,13 @@ processed_data = load_dataset(
     batch_size=batch_size,
 )
 
-path_enc = ResnetEncoder(hidden_dim=hidden_dim)
+if args.encoder == "resnet":
+    path_enc = ResnetEncoder(hidden_dim=hidden_dim)
+elif args.encoder == "vit":
+    path_enc = ImageEncoder(hidden_dim=hidden_dim)
+else:
+    raise ValueError(f"Unknown encoder type: {args.encoder}")
+
 geno_enc = GenomicEncoder(
     df=processed_data["filtered_df"],
     categorical_cols=processed_data["categorical_cols"],
