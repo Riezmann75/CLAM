@@ -71,7 +71,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--feature_extractor",
         type=str,
-        choices=["resnet50", "vit"],
+        choices=["resnet", "vit"],
         help="Feature extractor to use",
     )
 
