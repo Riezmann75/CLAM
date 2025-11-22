@@ -41,14 +41,15 @@ def train_loop(dataloader, model, loss_fn, optimizer, device=None, required_grad
     #     loss.backward()
     #     optimizer.step()
 
-    for patient, patches, clinical_outcomes, mask in dataloader:
+    for patient, patches, coordinates, clinical_outcomes, mask in dataloader:
         # t0 = time.time()
         patches = patches.to(device)
         patient = patient.to(device)
+        coordinates = coordinates.to(device)
         clinical_outcomes = clinical_outcomes.to(device)
         mask = ~mask.to(device)  # invert mask for key_padding_mask
         # t1 = time.time()
-        preds = model(patches, patient, mask)
+        preds = model(patches, patient, coordinates, mask)
         failure_times = clinical_outcomes[:, 0]
         is_observed = clinical_outcomes[:, 1]
         loss = loss_fn(preds, failure_times, is_observed)
