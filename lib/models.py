@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 import torch
 from torch import nn
@@ -29,13 +30,14 @@ class PositionalEncoder(nn.Module):
         self.temperature = temperature
         self.dim_x = self.d_model // 2
         self.dim_y = self.d_model - self.dim_x
+        self.scale = 2 * math.pi
 
     def forward(self, coordinates):
         # coordinates shape:  #batch * #patches * 2
         x = coordinates[:, :, 0]  # shape:  #batch * #patches
         y = coordinates[:, :, 1]  # shape:  #batch * #patches
-        x_norm = x / self.max_width  # normalize to [0, 1]
-        y_norm = y / self.max_height  # normalize to [0, 1]
+        x_norm = x / self.max_width  * self.scale # normalize to [0, 1]
+        y_norm = y / self.max_height * self.scale # normalize to [0, 1]
         # div term has shape (dim/2,)
         div_term_x = self.temperature ** (
             2 * torch.arange(0, self.dim_x, 2, device=coordinates.device) / self.dim_x
