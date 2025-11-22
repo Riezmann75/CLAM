@@ -111,6 +111,7 @@ def train_model_with_config(
         for patient, patches, coordinates, clinical_outcomes, mask in test_loader:
             patches = patches.to(device)
             patient = patient.to(device)
+            coordinates = coordinates.to(device)
             clinical_outcomes = clinical_outcomes.to(device)
             mask = ~mask.to(device)  # invert mask for key_padding_mask
             preds = model(patches, patient, coordinates, mask)
@@ -135,6 +136,7 @@ def train_model_with_config(
         for patient, patches, coordinates, clinical_outcomes, mask in train_loader:
             patches = patches.to(device)
             patient = patient.to(device)
+            coordinates = coordinates.to(device)
             clinical_outcomes = clinical_outcomes.to(device)
             mask = ~mask.to(device)  # invert mask for key_padding_mask
             preds = model(patches, patient, coordinates, mask)
