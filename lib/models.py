@@ -2,17 +2,52 @@ import math
 import pandas as pd
 import torch
 from torch import nn
+from torchvision import models
 
 
-class PathologicalEncoder(nn.Module):
+class ResnetEncoder(nn.Module):
     def __init__(self, hidden_dim: int = 128):
-        super(PathologicalEncoder, self).__init__()
-        self.fc = nn.LazyLinear(hidden_dim)
+        super(ResnetEncoder, self).__init__()
+        self.resnet = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+        self.resnet = nn.Sequential(
+            *list(self.resnet.children())[6:-1]
+        )  # remove last fc layer
+        self.fc1 = nn.LazyLinear(512)
+        self.fc2 = nn.LazyLinear(hidden_dim)
 
     def forward(self, x):
-        # x shape:
-        x = self.fc(x)
+        # x shape: Batch size x 512 x 28 x 28
+        x = self.resnet(x)  # shape: Batch size x 2048 x 1 x 1
+        x = torch.flatten(x, start_dim=1)  # shape: Batch size x 2048
+        x = self.fc1(x)
+        x = self.fc2(x)
         return x
+
+
+class GatedAttentionPooling(nn.Module):
+    def __init__(self, hidden_dim: int):
+        super(GatedAttentionPooling, self).__init__()
+        self.attention_V = nn.Linear(hidden_dim, hidden_dim)
+        self.attention_U = nn.Linear(hidden_dim, hidden_dim)
+        self.attention_weights = nn.Linear(hidden_dim, 1)
+
+    def forward(self, x):
+        # x shape: Batch size x Num patches x Feature dim
+        # mask shape: Batch size x Num patches (True for padding positions)
+        A_V = torch.tanh(
+            self.attention_V(x)
+        )  # shape: Batch size x Num patches x Feature dim
+        A_U = torch.sigmoid(
+            self.attention_U(x)
+        )  # shape: Batch size x Num patches x Feature dim
+        A = A_V * A_U  # shape: Batch size x Num patches x Feature dim
+        A = self.attention_weights(A).squeeze(-1)  # shape: Batch size x Num patches
+
+        A = torch.softmax(A, dim=1)  # shape: Batch size x Num patches
+
+        A = A.unsqueeze(-1)  # shape: Batch size x Num patches x 1
+        M = torch.sum(A * x, dim=1)  # shape: Batch size x Feature dim
+        return M, A.squeeze(-1)  # return pooled features and attention scores
 
 
 class PositionalEncoder(nn.Module):
@@ -36,8 +71,8 @@ class PositionalEncoder(nn.Module):
         # coordinates shape:  #batch * #patches * 2
         x = coordinates[:, :, 0]  # shape:  #batch * #patches
         y = coordinates[:, :, 1]  # shape:  #batch * #patches
-        x_norm = x / self.max_width  * self.scale # normalize to [0, 2*pi]
-        y_norm = y / self.max_height * self.scale # normalize to [0, 2*pi]
+        x_norm = x / self.max_width * self.scale  # normalize to [0, 2*pi]
+        y_norm = y / self.max_height * self.scale  # normalize to [0, 2*pi]
         # div term has shape (dim/2,)
         div_term_x = self.temperature ** (
             2 * torch.arange(0, self.dim_x, 2, device=coordinates.device) / self.dim_x
@@ -49,11 +84,15 @@ class PositionalEncoder(nn.Module):
         pe_x = x_norm.unsqueeze(-1) / div_term_x  # shape: #batch * #patches * (dim_x/2)
         pe_y = y_norm.unsqueeze(-1) / div_term_y  # shape: #batch * #patches * (dim_y/2)
 
-        pe_x = torch.concat((torch.sin(pe_x), torch.cos(pe_x)), dim=-1) # shape: #batch * #patches * dim_x
-        pe_y = torch.concat((torch.sin(pe_y), torch.cos(pe_y)), dim=-1) # shape: #batch * #patches * dim_y
+        pe_x = torch.concat(
+            (torch.sin(pe_x), torch.cos(pe_x)), dim=-1
+        )  # shape: #batch * #patches * dim_x
+        pe_y = torch.concat(
+            (torch.sin(pe_y), torch.cos(pe_y)), dim=-1
+        )  # shape: #batch * #patches * dim_y
 
-        pe = torch.concat((pe_x, pe_y), dim=-1) # shape: #batch * #patches * d_model
-        return pe  
+        pe = torch.concat((pe_x, pe_y), dim=-1)  # shape: #batch * #patches * d_model
+        return pe
 
 
 class BaseGenomicEncoder(nn.Module):
@@ -155,7 +194,7 @@ class NLL(nn.Module):
 class SurvivalModel(nn.Module):
     def __init__(
         self,
-        path_encoder: PathologicalEncoder,
+        path_encoder: ResnetEncoder,
         geno_encoder: GenomicEncoder,
         hidden_dim: int = 128,
     ):
@@ -171,12 +210,14 @@ class SurvivalModel(nn.Module):
             embed_dim=hidden_dim, num_heads=4, batch_first=True
         )
         self.positional_encoder = PositionalEncoder(d_model=hidden_dim)
+        self.attention_pooling = GatedAttentionPooling(hidden_dim=hidden_dim)
 
     def forward(self, path_x, geno_x, coordinates, mask):
         # path_x shape: Batch size x #patches x Feature dim
         # flatten:
-        B, N, D = path_x.shape
-        path_x = path_x.view(-1, D)  # shape: (Batch size * Num patches) x Feature dim
+        B, N, *hidden_dims = path_x.shape
+        # reshape to B*N x Feature dim
+        path_x = path_x.view(B * N, *hidden_dims)
         # geno_x shape: Batch size x Num genomic features
         path_features = self.path_encoder(
             path_x
@@ -193,9 +234,7 @@ class SurvivalModel(nn.Module):
         path_attended, _ = self.path_msa(
             path_features, path_features, path_features, key_padding_mask=mask
         )  # shape: Batch size x Num patches x Feature dim
-        path_representation = torch.mean(
-            path_attended, dim=1
-        )  # shape: Batch size x Feature dim
+        path_representation, _ = self.attention_pooling(path_attended)
         geno_features = geno_features.view(B, -1)  # shape: Batch size x Feature dim
         # concat path and genomic features
         combined_features = torch.cat(

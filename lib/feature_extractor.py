@@ -11,27 +11,34 @@ import torch
 from transformers import AutoImageProcessor, ViTModel
 
 
-class FeatureExtractor(nn.Module):
+class ViTFeatureExtractor(nn.Module):
     def __init__(self):
-        super(FeatureExtractor, self).__init__()
+        super(ViTFeatureExtractor, self).__init__()
         # Remove the final fully connected layer
         self.image_processor = AutoImageProcessor.from_pretrained(
             "owkin/phikon", use_fast=True
         )
         self.model = ViTModel.from_pretrained("owkin/phikon", add_pooling_layer=False)
-        self.resnet50 = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
-        self.features = nn.Sequential(*list(self.resnet50.children())[:-1])
 
     def forward(self, x):
         # shape x: (batch_size, 3, 224, 224)
-
         x = self.image_processor(x, return_tensors="pt")
-        with torch.no_grad():
-            outputs = self.model(**x)
-            x = outputs.last_hidden_state[:, 0, :]  # (batch_size, 768) shape
+        outputs = self.model(**x)
+        x = outputs.last_hidden_state[:, 0, :]  # (batch_size, 768) shape
+        return x
 
-        # x = self.features(x)
-        # x = x.view(x.size(0), -1)  # Flatten the output, shape: (batch_size, 2048)
+
+class ResNet50FeatureExtractor(nn.Module):
+    def __init__(self):
+        super(ResNet50FeatureExtractor, self).__init__()
+        self.resnet50 = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+        self.features = nn.Sequential(
+            *list(self.resnet50.children())[:6]
+        )  # stop before layer 3
+
+    def forward(self, x):
+        # shape x: (batch_size, 3, 224, 224)
+        x = self.features(x)  # batch_size * 512 * 28 * 28
         return x
 
 
@@ -61,13 +68,23 @@ if __name__ == "__main__":
         default=2,
         help="Magnification level of patches",
     )
+    parser.add_argument(
+        "--feature_extractor",
+        type=str,
+        choices=["resnet50", "vit"],
+        help="Feature extractor to use",
+    )
+
     args = parser.parse_args()
 
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
     extracted_slides = os.listdir(args.output_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = FeatureExtractor().to(device)
+    if args.feature_extractor == "vit":
+        model = ViTFeatureExtractor().to(device)
+    else:
+        model = ResNet50FeatureExtractor().to(device)
     h5_file_path = args.h5_dir
     h5_files = os.listdir(h5_file_path)
     for h5_file in tqdm(h5_files):
@@ -92,7 +109,8 @@ if __name__ == "__main__":
                 batch_features = model(
                     batch.to(device)
                 )  # Shape: (32, hidden_dim), last batch may be smaller
-            features.append(batch_features.cpu())
+                assert batch_features.requires_grad == False
+                features.append(batch_features.cpu())
         features = torch.cat(features, dim=0)  # Shape: (#patches, hidden_dim)
         torch.save(features, f"{args.output_dir}/{slide_id}.pt")
         print(

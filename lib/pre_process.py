@@ -1,6 +1,5 @@
 import os
 import h5py
-import openslide
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import pandas as pd
@@ -12,7 +11,17 @@ from torch.utils.data import DataLoader
 
 
 class PatientDataset(Dataset):
-    def __init__(self, slide_ids: list[str], h5_files: list[str], X, y):
+    def __init__(
+        self,
+        features_dir: str,
+        h5_dir: str,
+        slide_ids: list[str],
+        h5_files: list[str],
+        X,
+        y,
+    ):
+        self.features_dir = features_dir
+        self.patches_dir = h5_dir
         self.slide_ids = slide_ids
         self.h5_files = h5_files
         self.X = X
@@ -29,10 +38,8 @@ class PatientDataset(Dataset):
             assert os.path.exists(h5_file), f"H5 file {h5_file} does not exist."
         for slide_id in slide_ids:
             # load tensor from extracted features
-            data = h5py.File(
-                os.path.join("wsi_patches/BLCA/patches", f"{slide_id}.h5"), "r"
-            )
-            extracted_path = f"wsi_patches/BLCA/features/{slide_id}.pt"
+            data = h5py.File(os.path.join(self.patches_dir, f"{slide_id}.h5"), "r")
+            extracted_path = os.path.join(self.features_dir, f"{slide_id}.pt")
             self.coordinates.append(data["coords"][:])
             features = torch.load(extracted_path)
             self.patch_features.append(features)
@@ -67,14 +74,17 @@ def collate_fn(batch):
     patients = torch.stack(patients)
     patches = pad_sequence(patches, batch_first=True)
     # shape: batch * max_num_patches * 2
-    coordinates = pad_sequence([torch.tensor(coords) for coords in coordinates], batch_first=True)
+    coordinates = pad_sequence(
+        [torch.tensor(coords) for coords in coordinates], batch_first=True
+    )
 
     clinical_outcomes = torch.stack(clinical_outcomes)
     return patients, patches, coordinates, clinical_outcomes, mask
 
 
-def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str], batch_size=4):
+def load_dataset(clean_csv_path: str, feature_dir: str, h5_dir: str, batch_size=4):
     df = pd.read_csv(clean_csv_path)
+    h5_files = os.listdir(h5_dir)
     df_filtered = df.drop(columns=["site", "oncotree_code", "train"])
     # get the patients in file_ids
     wsi_path = "./wsi_files/BLCA/"
@@ -125,24 +135,30 @@ def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str], batch_si
     ]
 
     train_dataset = PatientDataset(
-        train_slide_ids,
-        train_h5_files,
-        X_train.reset_index(drop=True),
-        y_train.reset_index(drop=True),
+        features_dir=feature_dir,
+        h5_dir=h5_dir,
+        slide_ids=train_slide_ids,
+        h5_files=train_h5_files,
+        X=X_train.reset_index(drop=True),
+        y=y_train.reset_index(drop=True),
     )
 
     test_dataset = PatientDataset(
-        test_slide_ids,
-        test_h5_files,
-        X_test.reset_index(drop=True),
-        y_test.reset_index(drop=True),
+        features_dir=feature_dir,
+        h5_dir=h5_dir,
+        slide_ids=test_slide_ids,
+        h5_files=test_h5_files,
+        X=X_test.reset_index(drop=True),
+        y=y_test.reset_index(drop=True),
     )
 
     validate_dataset = PatientDataset(
-        validate_slide_ids,
-        validate_h5_files,
-        X_validate.reset_index(drop=True),
-        y_validate.reset_index(drop=True),
+        features_dir=feature_dir,
+        h5_dir=h5_dir,
+        slide_ids=validate_slide_ids,
+        h5_files=validate_h5_files,
+        X=X_validate.reset_index(drop=True),
+        y=y_validate.reset_index(drop=True),
     )
 
     train_loader = DataLoader(
