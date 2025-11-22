@@ -1,15 +1,13 @@
-import os
 
 import numpy as np
 import torch
 
 from lib.grid_search import GridSearch, SearchSpace
 from lib.grid_search import SearchSpace
-from lib.models import NLL, GenomicEncoder, PathologicalEncoder, SurvivalModel
+from lib.models import NLL, GenomicEncoder, ResnetEncoder, SurvivalModel
 from lib.pre_process import load_dataset
 from lib.train import train_model_with_config
 from lib.utils import decorate_optimizer
-from lib.plot import plot_top_configs
 
 import argparse
 
@@ -22,18 +20,41 @@ parser.add_argument(
 parser.add_argument(
     "--hidden_dim", type=int, default=128, help="Hidden dimension size for encoders"
 )
+parser.add_argument(
+    "--feature_dir",
+    type=str,
+    default="wsi_patches/BLCA/features/BLCA_resnet50",
+    help="Directory for feature files",
+)
+parser.add_argument(
+    "--h5_dir",
+    type=str,
+    default="wsi_patches/BLCA/patches/",
+    help="Directory for h5 patch files",
+)
+parser.add_argument(
+    "--clean_csv_path",
+    type=str,
+    default="dataset_csv/tcga_blca_all_clean.csv",
+    help="Path to the cleaned CSV file",
+)
+
 args = parser.parse_args()
 
 batch_size = args.batch_size
 hidden_dim = args.hidden_dim
+features_dir = args.feature_dir
+h5_dir = args.h5_dir
+clean_csv_path = args.clean_csv_path
 
-h5_dir = "wsi_patches/BLCA/patches/"
-clean_csv_path = "dataset_csv/tcga_blca_all_clean.csv"
-h5_files = os.listdir(h5_dir)
+processed_data = load_dataset(
+    clean_csv_path=clean_csv_path,
+    h5_dir=h5_dir,
+    feature_dir=features_dir,
+    batch_size=batch_size,
+)
 
-processed_data = load_dataset(clean_csv_path, h5_dir, h5_files, batch_size=batch_size)
-
-path_enc = PathologicalEncoder(hidden_dim=hidden_dim)
+path_enc = ResnetEncoder(hidden_dim=hidden_dim)
 geno_enc = GenomicEncoder(
     df=processed_data["filtered_df"],
     categorical_cols=processed_data["categorical_cols"],
