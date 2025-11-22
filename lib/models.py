@@ -8,11 +8,11 @@ from torchvision import models
 class ResnetEncoder(nn.Module):
     def __init__(self, hidden_dim: int = 128):
         super(ResnetEncoder, self).__init__()
-        self.resnet = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+        self.resnet = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
         self.resnet = nn.Sequential(
             *list(self.resnet.children())[6:-1]
         )  # remove last fc layer
-        self.fc1 = nn.LazyLinear(512)
+        self.fc1 = nn.LazyLinear(128)
         self.fc2 = nn.LazyLinear(hidden_dim)
 
     def forward(self, x):
@@ -34,6 +34,8 @@ class ImageEncoder(nn.Module):
             nn.LazyLinear(512),
             nn.ReLU(),
             nn.Dropout(0.2),
+            nn.LazyLinear(256),
+            nn.ReLU(),
             nn.LazyLinear(hidden_dim),
         )
 
