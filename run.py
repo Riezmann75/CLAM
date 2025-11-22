@@ -46,13 +46,13 @@ loss = NLL()
 
 search_space = SearchSpace.model_validate(
     {
-        "learning_rates": np.arange(1e-5, 3e-3, step=2e-5).tolist(),
+        "learning_rates": np.arange(6e-5, 3e-4, step=2e-5).tolist(),
         "weight_decays": [1e-4, 1e-3, 1e-2],
         "optimizers": [
             decorate_optimizer(torch.optim.Adam),
             decorate_optimizer(torch.optim.SGD),
         ],
-        "num_epochs": [50, 100],
+        "num_epochs": [50],
     }
 )
 
