@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 import torch
 from torch import nn
@@ -9,9 +10,51 @@ class PathologicalEncoder(nn.Module):
         self.fc = nn.LazyLinear(hidden_dim)
 
     def forward(self, x):
-        # x shape: 
+        # x shape:
         x = self.fc(x)
         return x
+
+
+class PositionalEncoder(nn.Module):
+    def __init__(
+        self,
+        d_model: int,
+        max_width: int = 100000,
+        max_height: int = 100000,
+        temperature: float = 10000.0,
+    ):
+        super(PositionalEncoder, self).__init__()
+        self.d_model = d_model
+        self.max_width = max_width
+        self.max_height = max_height
+        self.temperature = temperature
+        self.dim_x = self.d_model // 2
+        self.dim_y = self.d_model - self.dim_x
+        self.scale = 2 * math.pi
+
+    def forward(self, coordinates):
+        # coordinates shape:  #batch * #patches * 2
+        x = coordinates[:, :, 0]  # shape:  #batch * #patches
+        y = coordinates[:, :, 1]  # shape:  #batch * #patches
+        x_norm = x / self.max_width  * self.scale # normalize to [0, 2*pi]
+        y_norm = y / self.max_height * self.scale # normalize to [0, 2*pi]
+        # div term has shape (dim/2,)
+        div_term_x = self.temperature ** (
+            2 * torch.arange(0, self.dim_x, 2, device=coordinates.device) / self.dim_x
+        )
+        div_term_y = self.temperature ** (
+            2 * torch.arange(0, self.dim_y, 2, device=coordinates.device) / self.dim_y
+        )
+
+        pe_x = x_norm.unsqueeze(-1) / div_term_x  # shape: #batch * #patches * (dim_x/2)
+        pe_y = y_norm.unsqueeze(-1) / div_term_y  # shape: #batch * #patches * (dim_y/2)
+
+        pe_x = torch.concat((torch.sin(pe_x), torch.cos(pe_x)), dim=-1) # shape: #batch * #patches * dim_x
+        pe_y = torch.concat((torch.sin(pe_y), torch.cos(pe_y)), dim=-1) # shape: #batch * #patches * dim_y
+
+        pe = torch.concat((pe_x, pe_y), dim=-1) # shape: #batch * #patches * d_model
+        return pe  
+
 
 class BaseGenomicEncoder(nn.Module):
     def __init__(
@@ -127,8 +170,9 @@ class SurvivalModel(nn.Module):
         self.geno_msa = nn.MultiheadAttention(
             embed_dim=hidden_dim, num_heads=4, batch_first=True
         )
+        self.positional_encoder = PositionalEncoder(d_model=hidden_dim)
 
-    def forward(self, path_x, geno_x, mask):
+    def forward(self, path_x, geno_x, coordinates, mask):
         # path_x shape: Batch size x #patches x Feature dim
         # flatten:
         B, N, D = path_x.shape
@@ -141,7 +185,10 @@ class SurvivalModel(nn.Module):
             B, N, -1
         )  # shape: Batch size x Num patches x Feature dim
         geno_features = self.geno_encoder(geno_x)  # shape: Batch size x Feature dim
-
+        coordinates = self.positional_encoder(
+            coordinates
+        )  # shape: Batch size x Num patches x Feature dim
+        path_features = path_features + coordinates  # add positional encoding
         # Self Attention Mechanism
         path_attended, _ = self.path_msa(
             path_features, path_features, path_features, key_padding_mask=mask

@@ -1,4 +1,6 @@
 import os
+import h5py
+import openslide
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import pandas as pd
@@ -22,11 +24,16 @@ class PatientDataset(Dataset):
         ]
         self.feature_cols.remove("slide_id")
         self.patch_features = []
+        self.coordinates = []
         for h5_file in h5_files:
             assert os.path.exists(h5_file), f"H5 file {h5_file} does not exist."
         for slide_id in slide_ids:
             # load tensor from extracted features
+            data = h5py.File(
+                os.path.join("wsi_patches/BLCA/patches", f"{slide_id}.h5"), "r"
+            )
             extracted_path = f"wsi_patches/BLCA/features/{slide_id}.pt"
+            self.coordinates.append(data["coords"][:])
             features = torch.load(extracted_path)
             self.patch_features.append(features)
 
@@ -40,16 +47,17 @@ class PatientDataset(Dataset):
         patient = self.X[self.X["slide_id"] == slide_id].iloc[0]
         patient = patient[self.feature_cols]
         patient = torch.tensor(patient.values.astype(float))
-        return (patient, patch_features), torch.tensor(
+        return (patient, patch_features, self.coordinates[idx]), torch.tensor(
             self.y.iloc[idx].values.astype(float)
         )
 
 
 def collate_fn(batch):
-    patients, patches, clinical_outcomes = [], [], []
-    for (patient, image_patches), clinical_outcome in batch:
+    patients, patches, coordinates, clinical_outcomes = [], [], [], []
+    for (patient, image_patches, coords), clinical_outcome in batch:
         patients.append(patient)
         patches.append(image_patches)
+        coordinates.append(coords)
         clinical_outcomes.append(clinical_outcome)
     max_num_patches = max([patch.shape[0] for patch in patches])
     mask = torch.zeros(len(patches), max_num_patches, dtype=torch.bool)
@@ -58,9 +66,11 @@ def collate_fn(batch):
 
     patients = torch.stack(patients)
     patches = pad_sequence(patches, batch_first=True)
+    # shape: batch * max_num_patches * 2
+    coordinates = pad_sequence([torch.tensor(coords) for coords in coordinates], batch_first=True)
 
     clinical_outcomes = torch.stack(clinical_outcomes)
-    return patients, patches, clinical_outcomes, mask
+    return patients, patches, coordinates, clinical_outcomes, mask
 
 
 def load_dataset(clean_csv_path: str, h5_dir: str, h5_files: list[str], batch_size=4):
