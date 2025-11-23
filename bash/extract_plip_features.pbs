@@ -1,0 +1,24 @@
+#!/bin/bash
+#PBS -l walltime=6:00:00
+#PBS -l select=1:ncpus=1:ngpus=1:mem=20GB
+#PBS -q normal
+#PBS -P 12004268
+#PBS -N multimodal_survival_analysis
+#PBS -j oe
+#PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/out-run.txt
+
+cd /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM #need to change directory to the project folder first
+
+#activating conda environment
+source activate base
+conda activate clam_latest
+
+#check
+conda info --envs
+
+# create patches
+# python create_patches_fp.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA --patch_size 224 --seg --patch --stitch --patch_level 2 
+
+#run the file
+python ./lib/feature_extractor.py --output_dir wsi_patches/BLCA/features/BLCA_plip --h5_dir ./wsi_patches/BLCA/patches --patch_level 2 --feature_extractor plip
+

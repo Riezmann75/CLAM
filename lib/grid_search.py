@@ -18,12 +18,13 @@ class SearchSpace(BaseModel):
 
 
 class GridSearch:
-    def __init__(self, search_space: SearchSpace, device=None):
+    def __init__(self, search_space: SearchSpace, device=None, log_path = "experiments/result_logs.jsonl"):
         self.learning_rates = search_space.learning_rates
         self.optimizers = search_space.optimizers
         self.weight_decays = search_space.weight_decays
         self.num_epochs = search_space.num_epochs
         self.device = device
+        self.log_path = log_path
 
     def __call__(self, Model: nn.Module, train_fn, model_init_args=None, **kwargs):
 
@@ -107,7 +108,7 @@ class GridSearch:
     def write_training_log(self, log):
         current_path = os.getcwd()
         os.makedirs(os.path.join(current_path, "experiments"), exist_ok=True)
-        log_path = os.path.join(current_path, "experiments/result_logs.jsonl")
+        log_path = os.path.join(current_path, self.log_path)
         if not os.path.exists(log_path):
             open(log_path, "x").close()
         with open(log_path, "a") as f:

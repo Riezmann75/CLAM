@@ -8,7 +8,24 @@ import argparse
 import torch
 
 import torch
-from transformers import AutoImageProcessor, ViTModel
+from transformers import AutoImageProcessor, ViTModel, CLIPProcessor, CLIPModel
+
+
+class PLIPFeatureExtractor(nn.Module):
+    def __init__(self):
+        super(PLIPFeatureExtractor, self).__init__()
+        self.image_processor = CLIPProcessor.from_pretrained("vinid/plip", use_fast=True)
+        self.model = CLIPModel.from_pretrained("vinid/plip")
+
+    def forward(self, x):
+        # shape x: (batch_size, 3, 224, 224)
+        x = self.image_processor(images=x, return_tensors="pt")
+        outputs = self.model.get_image_features(**x)
+        return outputs  # (batch_size, 512) shape
+
+
+class UniFeatureExtractor(nn.Module):
+    pass
 
 
 class ViTFeatureExtractor(nn.Module):
@@ -71,7 +88,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--feature_extractor",
         type=str,
-        choices=["resnet", "vit"],
+        choices=["resnet", "vit", "plip"],
         help="Feature extractor to use",
     )
 
@@ -83,6 +100,8 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if args.feature_extractor == "vit":
         model = ViTFeatureExtractor().to(device)
+    elif args.feature_extractor == "plip":
+        model = PLIPFeatureExtractor().to(device)
     else:
         model = ResNet18FeatureExtractor().to(device)
     h5_file_path = args.h5_dir
