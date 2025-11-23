@@ -65,6 +65,7 @@ features_dir = args.feature_dir
 h5_dir = args.h5_dir
 clean_csv_path = args.clean_csv_path
 encoder_type = args.encoder
+log_path = args.log_path
 
 if "resnet" in encoder_type:
     assert "resnet" in features_dir, "Feature directory does not match encoder type"
@@ -110,7 +111,7 @@ search_space = SearchSpace.model_validate(
     }
 )
 
-grid_searcher = GridSearch(search_space, device=device)
+grid_searcher = GridSearch(search_space, device=device, log_path=log_path)
 grid_searcher(
     Model=SurvivalModel,
     model_init_args={
