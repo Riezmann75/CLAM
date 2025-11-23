@@ -46,9 +46,15 @@ parser.add_argument(
 )
 parser.add_argument(
     "--encoder",
-    choices=["resnet", "vit"],
+    choices=["resnet", "vit", "plip"],
     default="resnet",
     help="Type of path encoder to use",
+)
+parser.add_argument(
+    "--log_path",
+    type=str,
+    default="experiments/result_logs.jsonl",
+    help="Path to save the training logs",
 )
 
 args = parser.parse_args()
@@ -64,6 +70,8 @@ if "resnet" in encoder_type:
     assert "resnet" in features_dir, "Feature directory does not match encoder type"
 elif "vit" in encoder_type:
     assert "vit" in features_dir, "Feature directory does not match encoder type"
+else:
+    assert "plip" in features_dir, "Feature directory does not match encoder type"
 
 processed_data = load_dataset(
     clean_csv_path=clean_csv_path,
@@ -75,6 +83,8 @@ processed_data = load_dataset(
 if args.encoder == "resnet":
     path_enc = ResnetEncoder(hidden_dim=hidden_dim)
 elif args.encoder == "vit":
+    path_enc = ImageEncoder(hidden_dim=hidden_dim)
+elif args.encoder == "plip":
     path_enc = ImageEncoder(hidden_dim=hidden_dim)
 else:
     raise ValueError(f"Unknown encoder type: {args.encoder}")
@@ -95,7 +105,6 @@ search_space = SearchSpace.model_validate(
         "weight_decays": [1e-4],
         "optimizers": [
             decorate_optimizer(torch.optim.Adam),
-            decorate_optimizer(torch.optim.SGD),
         ],
         "num_epochs": [50],
     }
