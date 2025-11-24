@@ -61,6 +61,7 @@ def seg_and_patch(
     patch_save_dir,
     mask_save_dir,
     stitch_save_dir,
+    slides=None,
     patch_size=256,
     step_size=256,
     seg_params={
@@ -85,7 +86,8 @@ def seg_and_patch(
     process_list=None,
 ):
 
-    slides = sorted(os.listdir(source))
+    if slides is None:
+        slides = sorted(os.listdir(source))
 
     def is_image_file(filename):
         IMG_EXTENSIONS = [
