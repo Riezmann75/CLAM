@@ -14,7 +14,6 @@ def plot_training_curves(current_path, result_logs, y_lim=None, num_cols=2):
         ncols=num_cols,
         nrows=num_rows,
     )
-    print(num_rows, num_cols)
     for i in range(num_rows):
         for j in range(num_cols):
             if i * num_cols + j >= number_of_configs:

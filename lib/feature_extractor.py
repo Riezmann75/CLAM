@@ -14,7 +14,9 @@ from transformers import AutoImageProcessor, ViTModel, CLIPProcessor, CLIPModel
 class PLIPFeatureExtractor(nn.Module):
     def __init__(self):
         super(PLIPFeatureExtractor, self).__init__()
-        self.image_processor = CLIPProcessor.from_pretrained("vinid/plip", use_fast=True)
+        self.image_processor = CLIPProcessor.from_pretrained(
+            "vinid/plip", use_fast=True
+        )
         self.model = CLIPModel.from_pretrained("vinid/plip")
 
     def forward(self, x):
@@ -80,9 +82,9 @@ if __name__ == "__main__":
         help="Directory to save extracted features",
     )
     parser.add_argument(
-        "--patch_level",
+        "--downsample_level",
         type=int,
-        default=2,
+        default=16,
         help="Magnification level of patches",
     )
     parser.add_argument(
@@ -115,8 +117,12 @@ if __name__ == "__main__":
             f"{args.wsi_dir}/{h5_file.split('/')[-1].split('.h5')[0]}.svs"
         )
         patches = []
+        print(wsi.level_downsamples)
         for coord in data["coords"][:]:
-            patch = wsi.read_region(coord, args.patch_level, (224, 224)).convert("RGB")
+            level = wsi.get_best_level_for_downsample(args.downsample_level)
+            patch = wsi.read_region(
+                location=coord, level=level, size=(224, 224)
+            ).convert("RGB")
             tensor_patch = transforms.ToTensor()(patch)
             patches.append(tensor_patch)
         patches = torch.stack(patches)  # Shape: (#patches, 3, 224, 224)
