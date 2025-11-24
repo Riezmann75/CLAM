@@ -103,6 +103,12 @@ if __name__ == "__main__":
         help="Directory to save extracted features",
     )
     parser.add_argument(
+        "--patch_level",
+        type=int,
+        default=0,
+        help="Level of the patches to extract",
+    )
+    parser.add_argument(
         "--target_patch_size",
         type=int,
         default=224,
@@ -145,7 +151,7 @@ if __name__ == "__main__":
         patch_size = first_two_coords[1][1] - first_two_coords[0][1]
         for coord in data["coords"][:]:
             patch = wsi.read_region(
-                location=coord, level=0, size=(patch_size, patch_size)
+                location=coord, level=args.patch_level, size=(patch_size, patch_size)
             ).convert("RGB")
             tensor_patch = transforms.ToTensor()(patch)
             patches.append(tensor_patch)
