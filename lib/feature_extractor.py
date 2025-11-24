@@ -10,6 +10,8 @@ import torch
 import torch
 from transformers import AutoImageProcessor, ViTModel, CLIPProcessor, CLIPModel
 
+from simclr import load_model
+
 
 class PLIPFeatureExtractor(nn.Module):
     def __init__(self):
@@ -61,6 +63,25 @@ class ResNet18FeatureExtractor(nn.Module):
         return x
 
 
+class SimCLRFeatureExtractor(nn.Module):
+    def __init__(self, simclr_path, device=None):
+        super(SimCLRFeatureExtractor, self).__init__()
+        self.simclr_model = load_model(simclr_path, device=device)
+        self.device = (
+            torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            if device is None
+            else device
+        )
+
+    def forward(self, x):
+        # shape x: (batch_size, 3, 224, 224)
+        self.simclr_model.eval()
+        with torch.no_grad():
+            features = self.simclr_model(x.to(self.device))  # shape (batch_size, 512)
+
+        return features
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract features from WSI patches")
     parser.add_argument(
@@ -90,7 +111,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--feature_extractor",
         type=str,
-        choices=["resnet", "vit", "plip"],
+        choices=["resnet", "vit", "plip", "simclr"],
         help="Feature extractor to use",
     )
 
@@ -104,6 +125,9 @@ if __name__ == "__main__":
         model = ViTFeatureExtractor().to(device)
     elif args.feature_extractor == "plip":
         model = PLIPFeatureExtractor().to(device)
+    elif args.feature_extractor == "simclr":
+        simclr_model_path = "pretrained_encoders/tenpercent_resnet18.ckpt"
+        model = SimCLRFeatureExtractor(simclr_model_path, device=device).to(device)
     else:
         model = ResNet18FeatureExtractor().to(device)
     h5_file_path = args.h5_dir
@@ -140,6 +164,6 @@ if __name__ == "__main__":
                 features.append(batch_features.cpu())
         features = torch.cat(features, dim=0)  # Shape: (#patches, hidden_dim)
         torch.save(features, f"{args.output_dir}/{slide_id}.pt")
-        # print(
-        #     len(patches), features.shape
-        # )  # Expected output shape: (#patches, hidden_dim)
+        print(
+            len(patches), features.shape
+        )  # Expected output shape: (#patches, hidden_dim)
