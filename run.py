@@ -46,7 +46,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--encoder",
-    choices=["resnet", "vit", "plip"],
+    choices=["resnet", "vit", "plip", "simclr"],
     default="resnet",
     help="Type of path encoder to use",
 )
@@ -71,8 +71,10 @@ if "resnet" in encoder_type:
     assert "resnet" in features_dir, "Feature directory does not match encoder type"
 elif "vit" in encoder_type:
     assert "vit" in features_dir, "Feature directory does not match encoder type"
-else:
+elif "plip" in encoder_type:
     assert "plip" in features_dir, "Feature directory does not match encoder type"
+else:
+    assert "simclr" in features_dir, "Feature directory does not match encoder type"
 
 processed_data = load_dataset(
     clean_csv_path=clean_csv_path,
@@ -86,6 +88,8 @@ if args.encoder == "resnet":
 elif args.encoder == "vit":
     path_enc = ImageEncoder(hidden_dim=hidden_dim)
 elif args.encoder == "plip":
+    path_enc = ImageEncoder(hidden_dim=hidden_dim)
+elif args.encoder == "simclr":
     path_enc = ImageEncoder(hidden_dim=hidden_dim)
 else:
     raise ValueError(f"Unknown encoder type: {args.encoder}")
