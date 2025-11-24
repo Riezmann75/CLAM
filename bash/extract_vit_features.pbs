@@ -20,5 +20,5 @@ conda info --envs
 # python create_patches_fp.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA --patch_size 224 --seg --patch --stitch --patch_level 2 
 
 #run the file
-python ./lib/feature_extractor.py --output_dir wsi_patches/BLCA/features/BLCA_vit --h5_dir ./wsi_patches/BLCA --downsample_level 16 --feature_extractor vit
+python ./lib/feature_extractor.py --output_dir wsi_patches/BLCA/features/BLCA_vit --h5_dir wsi_patches/BLCA/patches --downsample_level 16 --feature_extractor vit
 
