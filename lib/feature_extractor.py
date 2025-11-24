@@ -82,10 +82,10 @@ if __name__ == "__main__":
         help="Directory to save extracted features",
     )
     parser.add_argument(
-        "--downsample_level",
+        "--target_patch_size",
         type=int,
-        default=16,
-        help="Magnification level of patches",
+        default=224,
+        help="Size of the patches to extract",
     )
     parser.add_argument(
         "--feature_extractor",
@@ -117,15 +117,17 @@ if __name__ == "__main__":
             f"{args.wsi_dir}/{h5_file.split('/')[-1].split('.h5')[0]}.svs"
         )
         patches = []
-        print(wsi.level_downsamples)
+        first_two_coords = data["coords"][:2]
+        patch_size = first_two_coords[1][1] - first_two_coords[0][1]
         for coord in data["coords"][:]:
-            level = wsi.get_best_level_for_downsample(args.downsample_level)
             patch = wsi.read_region(
-                location=coord, level=level, size=(224, 224)
+                location=coord, level=0, size=(patch_size, patch_size)
             ).convert("RGB")
             tensor_patch = transforms.ToTensor()(patch)
             patches.append(tensor_patch)
-        patches = torch.stack(patches)  # Shape: (#patches, 3, 224, 224)
+        patches = torch.stack(patches)  # Shape: (#patches, 3, patch_size, patch_size)
+        resizer = transforms.Resize((args.target_patch_size, args.target_patch_size))
+        patches = resizer(patches)
         batch_size = 32
         batches = torch.split(patches, batch_size)  # Split into batches of size 32
         features = []
@@ -138,6 +140,6 @@ if __name__ == "__main__":
                 features.append(batch_features.cpu())
         features = torch.cat(features, dim=0)  # Shape: (#patches, hidden_dim)
         torch.save(features, f"{args.output_dir}/{slide_id}.pt")
-        print(
-            len(patches), features.shape
-        )  # Expected output shape: (#patches, hidden_dim)
+        # print(
+        #     len(patches), features.shape
+        # )  # Expected output shape: (#patches, hidden_dim)

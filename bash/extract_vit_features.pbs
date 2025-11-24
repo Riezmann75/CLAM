@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l walltime=6:00:00
+#PBS -l walltime=8:00:00
 #PBS -l select=1:ncpus=1:ngpus=1:mem=20GB
 #PBS -q normal
 #PBS -P 12004268
@@ -17,8 +17,8 @@ conda activate clam_latest
 conda info --envs
 
 # create patches
-# python create_patches_fp.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA --patch_size 224 --seg --patch --stitch --patch_level 2 
+python ./lib/patch_extractor.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA  --target_magnification 2.5 --patch --seg --stitch
 
 #run the file
-python ./lib/feature_extractor.py --output_dir wsi_patches/BLCA/features/BLCA_vit --h5_dir wsi_patches/BLCA/patches --downsample_level 16 --feature_extractor vit
+python python ./lib/feature_extractor.py --h5_dir wsi_patches/BLCA/patches --wsi_dir wsi_files/BLCA --output_dir wsi_patches/BLCA/features/BLCA_vit --target_patch_size 224 --feature_extractor vit
 
