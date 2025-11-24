@@ -28,6 +28,8 @@ def plot_training_curves(current_path, result_logs, y_lim=None, num_cols=2):
                 "Adam" if "adam" in config.get("optimizer").get("name") else "SGD"
             )
             lr = config.get("lr")
+            # max num of digits for lr is 5
+            lr = float(f"{lr:.5g}")
             weight_decay = config.get("weight_decay")
             num_epoch = config.get("num_epoch")
             if type(axes) is np.ndarray:
@@ -95,8 +97,13 @@ def plot_training_curves(current_path, result_logs, y_lim=None, num_cols=2):
     plt.savefig(os.path.join(current_path, "training_curves.png"))
 
 
-def plot_top_configs(experiment_path: str, y_lim=None, top_k: int = 2):
-    log_path = os.path.join(experiment_path, "result_logs.jsonl")
+def plot_top_configs(
+    experiment_path: str,
+    log_file: str = "result_logs.jsonl",
+    y_lim=None,
+    top_k: int = 2,
+):
+    log_path = os.path.join(experiment_path, log_file)
     with open(log_path, "r") as f:
         result_logs = [json.loads(line) for line in f.readlines()]
         result_logs = [
@@ -132,11 +139,20 @@ if __name__ == "__main__":
         default=2,
         help="number of top configurations to plot",
     )
+    parser.add_argument(
+        "--log_file",
+        type=str,
+        default="result_logs.jsonl",
+        help="name of the log file containing results",
+    )
     parser = parser.parse_args()
 
     plot_top_configs(
-        experiment_path=parser.experiment_path, y_lim=parser.y_lim, top_k=parser.top_k
+        experiment_path=parser.experiment_path,
+        log_file=parser.log_file,
+        y_lim=parser.y_lim,
+        top_k=parser.top_k,
     )
 
 # example command to run:
-# python lib/plot.py --experiment_path ./experiments --y_lim 2 5 --top_k 2
+# python lib/plot.py --experiment_path ./experiments --log_file result_logs.jsonl --y_lim 2 5 --top_k 2
