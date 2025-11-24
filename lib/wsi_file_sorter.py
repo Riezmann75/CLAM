@@ -19,6 +19,7 @@ def sort_wsi_files(wsi_dir, target_magnification):
         objective_power = int(
             wsi.properties.get(openslide.PROPERTY_NAME_OBJECTIVE_POWER)
         )
+        objective_power = objective_power / wsi.level_downsamples[1]
         scale_factor = objective_power / target_magnification
         patch_size = int(224 * scale_factor)
         if patch_size not in magnification_map:
