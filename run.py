@@ -13,7 +13,7 @@ from lib.models import (
 )
 from lib.pre_process import load_dataset
 from lib.train import train_model_with_config
-from lib.utils import decorate_optimizer
+from lib.train_utils.utils import decorate_optimizer
 
 import argparse
 

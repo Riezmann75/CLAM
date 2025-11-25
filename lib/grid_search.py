@@ -4,8 +4,9 @@ from pydantic import BaseModel
 from torch import nn
 import torch
 
-from exception import StopTrainingError
-from utils import parse_optimizer
+
+from train_utils.exception import StopTrainingError
+from train_utils.utils import parse_optimizer
 
 from tqdm import tqdm
 
