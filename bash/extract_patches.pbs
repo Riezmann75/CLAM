@@ -17,4 +17,4 @@ conda activate clam_latest
 conda info --envs
 
 # create patches
-python ./lib/patch_extractor.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA  --target_magnification 2.5 --patch --seg --stitch --patch_level 1
+python ./lib/patch_extractor.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA  --target_magnification 2.5 --patch --seg --stitch --patch_level 2
