@@ -1,9 +1,9 @@
 #!/bin/bash
 #PBS -l walltime=8:00:00
 #PBS -l select=1:ncpus=1:ngpus=1:mem=32GB
-#PBS -q normal
+#PBS -q ai
 #PBS -P 12004268
-#PBS -N multimodal_survival_analysis
+#PBS -N extract resnet18 features
 #PBS -j oe
 #PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/extract_resnet_features.txt
 #PBS -M giabao.cao@ntu.edu.sg
