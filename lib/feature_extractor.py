@@ -1,5 +1,7 @@
+import math
 import os
 import h5py
+import numpy as np
 import openslide
 from torchvision import models, transforms
 import torch.nn as nn
@@ -149,27 +151,57 @@ if __name__ == "__main__":
         patches = []
         first_two_coords = data["coords"][:2]
         patch_size = first_two_coords[1][1] - first_two_coords[0][1]
-        for coord in data["coords"][:]:
-            patch = wsi.read_region(
-                location=coord, level=args.patch_level, size=(patch_size, patch_size)
-            ).convert("RGB")
-            tensor_patch = transforms.ToTensor()(patch)
-            patches.append(tensor_patch)
-        patches = torch.stack(patches)  # Shape: (#patches, 3, patch_size, patch_size)
-        resizer = transforms.Resize((args.target_patch_size, args.target_patch_size))
-        patches = resizer(patches)
         batch_size = 32
-        batches = torch.split(patches, batch_size)  # Split into batches of size 32
+        batches = np.array_split(
+            data["coords"][:], math.ceil(len(data["coords"][:]) / batch_size)
+        )
         features = []
         for batch in batches:
+            patches = []
+            for coord in batch:
+                patch = wsi.read_region(
+                    location=coord,
+                    level=args.patch_level,
+                    size=(patch_size, patch_size),
+                ).convert("RGB")
+                tensor_patch = transforms.ToTensor()(patch)
+                patches.append(tensor_patch)
+            patches = torch.stack(
+                patches
+            )  # Shape: (#patches, 3, patch_size, patch_size)
+            resizer = transforms.Resize(
+                (args.target_patch_size, args.target_patch_size)
+            )
+            patches = resizer(patches)
             with torch.no_grad():
                 batch_features = model(
-                    batch.to(device)
-                )  # Shape: (32, hidden_dim), last batch may be smaller
+                    patches.to(device)
+                )  # Shape: (batch_size, hidden_dim)
                 assert batch_features.requires_grad == False
                 features.append(batch_features.cpu())
         features = torch.cat(features, dim=0)  # Shape: (#patches, hidden_dim)
         torch.save(features, f"{args.output_dir}/{slide_id}.pt")
-        print(
-            len(patches), features.shape
-        )  # Expected output shape: (#patches, hidden_dim)
+        # for coord in data["coords"][:]:
+        #     patch = wsi.read_region(
+        #         location=coord, level=args.patch_level, size=(patch_size, patch_size)
+        #     ).convert("RGB")
+        #     tensor_patch = transforms.ToTensor()(patch)
+        #     patches.append(tensor_patch)
+        # patches = torch.stack(patches)  # Shape: (#patches, 3, patch_size, patch_size)
+        # resizer = transforms.Resize((args.target_patch_size, args.target_patch_size))
+        # patches = resizer(patches)
+        # batch_size = 32
+        # batches = torch.split(patches, batch_size)  # Split into batches of size 32
+        # features = []
+        # for batch in batches:
+        #     with torch.no_grad():
+        #         batch_features = model(
+        #             batch.to(device)
+        #         )  # Shape: (32, hidden_dim), last batch may be smaller
+        #         assert batch_features.requires_grad == False
+        #         features.append(batch_features.cpu())
+        # features = torch.cat(features, dim=0)  # Shape: (#patches, hidden_dim)
+        # torch.save(features, f"{args.output_dir}/{slide_id}.pt")
+        # print(
+        #     len(patches), features.shape
+        # )  # Expected output shape: (#patches, hidden_dim)
