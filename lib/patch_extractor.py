@@ -109,7 +109,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    magnification_map = sort_wsi_files(args.source, args.target_magnification)
+    magnification_map = sort_wsi_files(
+        args.source, args.target_magnification, args.patch_level
+    )
     for patch_size, wsi_files in magnification_map.items():
         args.patch_size = patch_size
         patch_extractor = PatchExtractor(
