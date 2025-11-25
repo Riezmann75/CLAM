@@ -12,8 +12,45 @@ import torch
 
 import torch
 from transformers import AutoImageProcessor, ViTModel, CLIPProcessor, CLIPModel
-
 from simclr import load_model
+from torch.utils.data import DataLoader, Dataset
+
+
+class WSIPatchDataset(Dataset):
+    def __init__(self, slide_path, coords, patch_level, patch_size, transform=None):
+        """
+        Args:
+            data_list (list): List of tuples containing (patient_id, patches, coordinates, clinical_outcomes, mask)
+        """
+        self.slide_path = slide_path
+        self.coords = coords
+        self.patch_level = patch_level
+        self.patch_size = patch_size
+        self.transform = transform
+        self.wsi = None
+
+    def __len__(self):
+        return len(self.coords)
+
+    def __getitem__(self, idx):
+        if self.wsi is None:
+            import openslide
+
+            self.wsi = openslide.OpenSlide(self.slide_path)
+
+        coord = self.coords[idx]
+
+        # Read region
+        patch = self.wsi.read_region(
+            location=coord,
+            level=self.patch_level,
+            size=(self.patch_size, self.patch_size),
+        ).convert("RGB")
+
+        if self.transform:
+            patch = self.transform(patch)
+
+        return patch
 
 
 class PLIPFeatureExtractor(nn.Module):
@@ -168,31 +205,57 @@ if __name__ == "__main__":
         features = []
         resizer = transforms.Resize((args.target_patch_size, args.target_patch_size))
         to_tensor = transforms.ToTensor()
-        for batch in tqdm(batches, desc=f"Extracting features for {slide_id}"):
-            patches = []
-            for coord in batch:
-                patch = wsi.read_region(
-                    location=coord,
-                    level=args.patch_level,
-                    size=(patch_size, patch_size),
-                ).convert("RGB")
-                patch = resizer(patch)
-                tensor_patch = to_tensor(patch)
-                patches.append(tensor_patch)
-            patches = torch.stack(
-                patches
-            )  # Shape: (#patches, 3, patch_size, patch_size)
+        patch_transforms = transforms.Compose(
+            [
+                transforms.Resize((args.target_patch_size, args.target_patch_size)),
+                transforms.ToTensor(),
+            ]
+        )
+        dataset = WSIPatchDataset(
+            slide_path=f"{args.wsi_dir}/{h5_file.split('/')[-1].split('.h5')[0]}.svs",
+            coords=data["coords"][:],
+            patch_level=args.patch_level,
+            patch_size=patch_size,
+            transform=patch_transforms,
+        )
+        loader = DataLoader(dataset, batch_size=32, num_workers=8, pin_memory=True)
+
+        # 3. Fast Loop
+        features = []
+        # Now the loop just grabs pre-fetched batches!
+        for batch_patches in tqdm(loader, desc=f"Processing {slide_id}"):
             with torch.no_grad():
-                batch_features = model(
-                    patches.to(device)
-                )  # Shape: (batch_size, hidden_dim)
-                assert batch_features.requires_grad == False
+                # No resizing/stacking here - it's already done by workers!
+                batch_features = model(batch_patches.to(device))
                 features.append(batch_features.cpu())
-        features = torch.cat(features, dim=0)  # Shape: (#patches, hidden_dim)
-        start = time.time()
-        torch.save(features, f"{args.output_dir}/{slide_id}.pt")
-        end = time.time()
-        print(f"Time to save features: {end - start} seconds")
+
+        features = torch.cat(features, dim=0)
+
+        # for batch in tqdm(batches, desc=f"Extracting features for {slide_id}"):
+        #     patches = []
+        #     for coord in batch:
+        #         patch = wsi.read_region(
+        #             location=coord,
+        #             level=args.patch_level,
+        #             size=(patch_size, patch_size),
+        #         ).convert("RGB")
+        #         patch = resizer(patch)
+        #         tensor_patch = to_tensor(patch)
+        #         patches.append(tensor_patch)
+        #     patches = torch.stack(
+        #         patches
+        #     )  # Shape: (#patches, 3, patch_size, patch_size)
+        #     with torch.no_grad():
+        #         batch_features = model(
+        #             patches.to(device)
+        #         )  # Shape: (batch_size, hidden_dim)
+        #         assert batch_features.requires_grad == False
+        #         features.append(batch_features.cpu())
+        # features = torch.cat(features, dim=0)  # Shape: (#patches, hidden_dim)
+        # start = time.time()
+        # torch.save(features, f"{args.output_dir}/{slide_id}.pt")
+        # end = time.time()
+        # print(f"Time to save features: {end - start} seconds")
         # for coord in data["coords"][:]:
         #     patch = wsi.read_region(
         #         location=coord, level=args.patch_level, size=(patch_size, patch_size)
