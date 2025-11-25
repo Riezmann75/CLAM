@@ -6,6 +6,8 @@
 #PBS -N multimodal_survival_analysis
 #PBS -j oe
 #PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/train_with_resnet.txt
+#PBS -M giabao.cao@ntu.edu.sg
+#PBS -m abe
 
 cd /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM #need to change directory to the project folder first
 
