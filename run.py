@@ -2,7 +2,6 @@ import numpy as np
 import torch
 
 from lib.grid_search import GridSearch, SearchSpace
-from lib.grid_search import SearchSpace
 from lib.models import (
     NLL,
     GenomicEncoder,
