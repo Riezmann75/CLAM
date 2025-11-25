@@ -1,10 +1,10 @@
 import time
 import torch
-from lib.exception import StopTrainingError
+from exception import StopTrainingError
 import numpy as np
 from torch import nn
-from lib.metrics import c_index
-from lib.transform import mixup_dataset
+from metrics import c_index
+from transform import mixup_dataset
 
 
 def train_loop(dataloader, model, loss_fn, optimizer, device=None, required_grad=True):

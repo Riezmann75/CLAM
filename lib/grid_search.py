@@ -4,8 +4,8 @@ from pydantic import BaseModel
 from torch import nn
 import torch
 
-from lib.exception import StopTrainingError
-from lib.utils import parse_optimizer
+from exception import StopTrainingError
+from utils import parse_optimizer
 
 from tqdm import tqdm
 
@@ -18,7 +18,12 @@ class SearchSpace(BaseModel):
 
 
 class GridSearch:
-    def __init__(self, search_space: SearchSpace, device=None, log_path = "experiments/result_logs.jsonl"):
+    def __init__(
+        self,
+        search_space: SearchSpace,
+        device=None,
+        log_path="experiments/result_logs.jsonl",
+    ):
         self.learning_rates = search_space.learning_rates
         self.optimizers = search_space.optimizers
         self.weight_decays = search_space.weight_decays
