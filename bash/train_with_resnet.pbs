@@ -3,7 +3,7 @@
 #PBS -l select=1:ngpus=1:mem=32GB
 #PBS -q normal
 #PBS -P 12004268
-#PBS -N multimodal_survival_analysis
+#PBS -N train_with_resnet
 #PBS -j oe
 #PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/train_with_resnet.txt
 #PBS -M giabao.cao@ntu.edu.sg
