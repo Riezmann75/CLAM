@@ -6,6 +6,8 @@
 #PBS -N multimodal_survival_analysis
 #PBS -j oe
 #PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/extract_patches.txt
+#PBS -M giabao.cao@ntu.edu.sg
+#PBS -m abe
 
 cd /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM #need to change directory to the project folder first
 
@@ -17,4 +19,4 @@ conda activate clam_latest
 conda info --envs
 
 # create patches
-python ./lib/patch_extractor.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA  --target_magnification 2.5 --patch --seg --stitch --patch_level 2
+python ./lib/patch_extractor.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA/level_2  --target_magnification 2.5 --patch --seg --stitch --patch_level 2
