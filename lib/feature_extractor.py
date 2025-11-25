@@ -194,9 +194,21 @@ if __name__ == "__main__":
         end = time.time()
         print(f"Time to open WSI file: {end - start} seconds")
         patches = []
-        first_two_coords = data["coords"][:2]
-        assert first_two_coords[1][0] == first_two_coords[0][0]
-        patch_size = first_two_coords[1][1] - first_two_coords[0][1]
+
+        patch_size = None
+        for i in range(len(data["coords"][:]) - 1):
+            current_coord = data["coords"][:][i]
+            next_coord = data["coords"][:][i + 1]
+            if next_coord[0] == current_coord[0]:
+                patch_size = next_coord[1] - current_coord[1]
+                break
+            elif next_coord[1] == current_coord[1]:
+                patch_size = next_coord[0] - current_coord[0]
+                break
+            else:
+                continue
+        assert patch_size is not None, "Could not determine patch size from coordinates"
+
         batch_size = 32
         print(f"Total number of patches: {len(data['coords'][:])}")
         batches = np.array_split(
@@ -219,64 +231,11 @@ if __name__ == "__main__":
             transform=patch_transforms,
         )
         loader = DataLoader(dataset, batch_size=32, num_workers=8, pin_memory=True)
-
-        # 3. Fast Loop
         features = []
-        # Now the loop just grabs pre-fetched batches!
         for batch_patches in tqdm(loader, desc=f"Processing {slide_id}"):
             with torch.no_grad():
-                # No resizing/stacking here - it's already done by workers!
                 batch_features = model(batch_patches.to(device))
                 features.append(batch_features.cpu())
 
         features = torch.cat(features, dim=0)
-
-        # for batch in tqdm(batches, desc=f"Extracting features for {slide_id}"):
-        #     patches = []
-        #     for coord in batch:
-        #         patch = wsi.read_region(
-        #             location=coord,
-        #             level=args.patch_level,
-        #             size=(patch_size, patch_size),
-        #         ).convert("RGB")
-        #         patch = resizer(patch)
-        #         tensor_patch = to_tensor(patch)
-        #         patches.append(tensor_patch)
-        #     patches = torch.stack(
-        #         patches
-        #     )  # Shape: (#patches, 3, patch_size, patch_size)
-        #     with torch.no_grad():
-        #         batch_features = model(
-        #             patches.to(device)
-        #         )  # Shape: (batch_size, hidden_dim)
-        #         assert batch_features.requires_grad == False
-        #         features.append(batch_features.cpu())
-        # features = torch.cat(features, dim=0)  # Shape: (#patches, hidden_dim)
-        # start = time.time()
-        # torch.save(features, f"{args.output_dir}/{slide_id}.pt")
-        # end = time.time()
-        # print(f"Time to save features: {end - start} seconds")
-        # for coord in data["coords"][:]:
-        #     patch = wsi.read_region(
-        #         location=coord, level=args.patch_level, size=(patch_size, patch_size)
-        #     ).convert("RGB")
-        #     tensor_patch = transforms.ToTensor()(patch)
-        #     patches.append(tensor_patch)
-        # patches = torch.stack(patches)  # Shape: (#patches, 3, patch_size, patch_size)
-        # resizer = transforms.Resize((args.target_patch_size, args.target_patch_size))
-        # patches = resizer(patches)
-        # batch_size = 32
-        # batches = torch.split(patches, batch_size)  # Split into batches of size 32
-        # features = []
-        # for batch in batches:
-        #     with torch.no_grad():
-        #         batch_features = model(
-        #             batch.to(device)
-        #         )  # Shape: (32, hidden_dim), last batch may be smaller
-        #         assert batch_features.requires_grad == False
-        #         features.append(batch_features.cpu())
-        # features = torch.cat(features, dim=0)  # Shape: (#patches, hidden_dim)
-        # torch.save(features, f"{args.output_dir}/{slide_id}.pt")
-        # print(
-        #     len(patches), features.shape
-        # )  # Expected output shape: (#patches, hidden_dim)
+        torch.save(features, f"{args.output_dir}/{slide_id}.pt")
