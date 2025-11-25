@@ -166,6 +166,8 @@ if __name__ == "__main__":
             data["coords"][:], math.ceil(len(data["coords"][:]) / batch_size)
         )
         features = []
+        resizer = transforms.Resize((args.target_patch_size, args.target_patch_size))
+        to_tensor = transforms.ToTensor()
         for batch in tqdm(batches, desc=f"Extracting features for {slide_id}"):
             patches = []
             for coord in batch:
@@ -174,15 +176,12 @@ if __name__ == "__main__":
                     level=args.patch_level,
                     size=(patch_size, patch_size),
                 ).convert("RGB")
-                tensor_patch = transforms.ToTensor()(patch)
+                patch = resizer(patch)
+                tensor_patch = to_tensor(patch)
                 patches.append(tensor_patch)
             patches = torch.stack(
                 patches
             )  # Shape: (#patches, 3, patch_size, patch_size)
-            resizer = transforms.Resize(
-                (args.target_patch_size, args.target_patch_size)
-            )
-            patches = resizer(patches)
             with torch.no_grad():
                 batch_features = model(
                     patches.to(device)
