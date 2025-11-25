@@ -223,6 +223,7 @@ if __name__ == "__main__":
                 transforms.ToTensor(),
             ]
         )
+        print(f"Patch size: {patch_size}, Target patch size: {args.target_patch_size}")
         dataset = WSIPatchDataset(
             slide_path=f"{args.wsi_dir}/{h5_file.split('/')[-1].split('.h5')[0]}.svs",
             coords=data["coords"][:],
