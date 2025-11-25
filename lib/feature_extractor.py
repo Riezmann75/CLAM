@@ -1,5 +1,6 @@
 import math
 import os
+import time
 import h5py
 import numpy as np
 import openslide
@@ -140,23 +141,32 @@ if __name__ == "__main__":
         model = ResNet18FeatureExtractor().to(device)
     h5_file_path = args.h5_dir
     h5_files = os.listdir(h5_file_path)
+    print(extracted_slides)
     for h5_file in tqdm(h5_files):
         slide_id = h5_file.split(".h5")[0]
         if slide_id + ".pt" in extracted_slides:
             continue
+        start = time.time()
         data = h5py.File(os.path.join(h5_file_path, h5_file), "r")
+        end = time.time()
+        print(f"Time to read h5 file: {end - start} seconds")
+        start = time.time()
         wsi = openslide.open_slide(
             f"{args.wsi_dir}/{h5_file.split('/')[-1].split('.h5')[0]}.svs"
         )
+        end = time.time()
+        print(f"Time to open WSI file: {end - start} seconds")
         patches = []
         first_two_coords = data["coords"][:2]
+        assert first_two_coords[1][0] == first_two_coords[0][0]
         patch_size = first_two_coords[1][1] - first_two_coords[0][1]
         batch_size = 32
+        print(f"Total number of patches: {len(data['coords'][:])}")
         batches = np.array_split(
             data["coords"][:], math.ceil(len(data["coords"][:]) / batch_size)
         )
         features = []
-        for batch in batches:
+        for batch in tqdm(batches, desc=f"Extracting features for {slide_id}"):
             patches = []
             for coord in batch:
                 patch = wsi.read_region(
@@ -180,7 +190,10 @@ if __name__ == "__main__":
                 assert batch_features.requires_grad == False
                 features.append(batch_features.cpu())
         features = torch.cat(features, dim=0)  # Shape: (#patches, hidden_dim)
+        start = time.time()
         torch.save(features, f"{args.output_dir}/{slide_id}.pt")
+        end = time.time()
+        print(f"Time to save features: {end - start} seconds")
         # for coord in data["coords"][:]:
         #     patch = wsi.read_region(
         #         location=coord, level=args.patch_level, size=(patch_size, patch_size)
