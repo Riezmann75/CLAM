@@ -11,17 +11,22 @@ def move_file_to_dir(file_path, target_dir):
     return target_path
 
 
+def compute_patch_size(wsi_path, target_magnification, patch_level=0):
+    wsi = openslide.open_slide(wsi_path)
+    objective_power = int(wsi.properties.get(openslide.PROPERTY_NAME_OBJECTIVE_POWER))
+    objective_power = objective_power / wsi.level_downsamples[patch_level]
+    scale_factor = objective_power / target_magnification
+    patch_size = int(224 * scale_factor)
+    return patch_size
+
+
 def sort_wsi_files(wsi_dir, target_magnification, patch_level=0):
     wsi_files = [f for f in os.listdir(wsi_dir) if f.endswith(".svs")]
     magnification_map = {}
     for wsi_file in wsi_files:
-        wsi = openslide.open_slide(os.path.join(wsi_dir, wsi_file))
-        objective_power = int(
-            wsi.properties.get(openslide.PROPERTY_NAME_OBJECTIVE_POWER)
+        patch_size = compute_patch_size(
+            os.path.join(wsi_dir, wsi_file), target_magnification, patch_level
         )
-        objective_power = objective_power / wsi.level_downsamples[patch_level]
-        scale_factor = objective_power / target_magnification
-        patch_size = int(224 * scale_factor)
         if patch_size not in magnification_map:
             magnification_map[patch_size] = []
         magnification_map[patch_size].append(wsi_file)

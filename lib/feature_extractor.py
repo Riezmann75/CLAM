@@ -12,6 +12,7 @@ import torch
 
 import torch
 from transformers import AutoImageProcessor, ViTModel, CLIPProcessor, CLIPModel
+from wsi_file_sorter import compute_patch_size
 from simclr import load_model
 from torch.utils.data import DataLoader, Dataset
 
@@ -160,6 +161,12 @@ if __name__ == "__main__":
         choices=["resnet", "vit", "plip", "simclr"],
         help="Feature extractor to use",
     )
+    parser.add_argument(
+        "--target_magnification",
+        type=float,
+        default=2.5,
+        help="Target magnification level for patch size computation",
+    )
 
     args = parser.parse_args()
 
@@ -195,19 +202,11 @@ if __name__ == "__main__":
         print(f"Time to open WSI file: {end - start} seconds")
         patches = []
 
-        patch_size = None
-        for i in range(len(data["coords"][:]) - 1):
-            current_coord = data["coords"][:][i]
-            next_coord = data["coords"][:][i + 1]
-            if next_coord[0] == current_coord[0]:
-                patch_size = next_coord[1] - current_coord[1]
-                break
-            elif next_coord[1] == current_coord[1]:
-                patch_size = next_coord[0] - current_coord[0]
-                break
-            else:
-                continue
-        assert patch_size is not None, "Could not determine patch size from coordinates"
+        patch_size = compute_patch_size(
+            wsi_path=f"{args.wsi_dir}/{h5_file.split('/')[-1].split('.h5')[0]}.svs",
+            target_magnification=args.target_magnification,
+            patch_level=args.patch_level,
+        )
 
         batch_size = 32
         print(f"Total number of patches: {len(data['coords'][:])}")

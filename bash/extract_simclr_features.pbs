@@ -3,7 +3,7 @@
 #PBS -l select=1:ncpus=1:ngpus=1:mem=32GB
 #PBS -q normal
 #PBS -P 12004268
-#PBS -N multimodal_survival_analysis
+#PBS -N extract_simclr_features
 #PBS -j oe
 #PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/extract_simclr_features.txt
 #PBS -M giabao.cao@ntu.edu.sg
@@ -22,5 +22,5 @@ conda info --envs
 # python ./lib/patch_extractor.py --source wsi_files/BLCA --save_dir wsi_patches/BLCA  --target_magnification 2.5 --patch --seg --stitch
 
 #run the file
-python ./lib/feature_extractor.py --h5_dir wsi_patches/BLCA/patches --wsi_dir wsi_files/BLCA --output_dir wsi_patches/BLCA/features/BLCA_simclr --patch_level 2  --target_patch_size 224 --feature_extractor simclr
+python ./lib/feature_extractor.py --h5_dir wsi_patches/BLCA/patches --wsi_dir wsi_files/BLCA --output_dir wsi_patches/BLCA/features/BLCA_simclr --patch_level 2 --target_magnification 2.5  --target_patch_size 224 --feature_extractor simclr
     
