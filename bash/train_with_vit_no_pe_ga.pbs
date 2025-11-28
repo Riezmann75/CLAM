@@ -1,0 +1,21 @@
+#!/bin/bash
+#PBS -l walltime=10:00:00
+#PBS -l select=1:ngpus=1:mem=32GB
+#PBS -q normal
+#PBS -P 12004268
+#PBS -N train_with_vit_no_pe_ga
+#PBS -j oe
+#PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/train_with_vit_no_pe_ga.txt
+#PBS -M giabao.cao@ntu.edu.sg
+#PBS -m abe
+
+cd /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM #need to change directory to the project folder first
+
+#activating conda environment
+source activate base
+conda activate clam_latest
+
+#check
+conda info --envs
+
+python run.py --batch_size 16 --config_path yaml/vit_model_config_no_pe_ga.yaml --hidden_dim 128 --feature_dir wsi_patches/BLCA/features/BLCA_vit --h5_dir wsi_patches/BLCA/patches/ --clean_csv_path dataset_csv/tcga_blca_all_clean.csv --encoder vit --log_path experiments/result_vit.jsonl
