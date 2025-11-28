@@ -217,6 +217,8 @@ class SurvivalModel(nn.Module):
         path_encoder: ResnetEncoder,
         geno_encoder: GenomicEncoder,
         hidden_dim: int = 128,
+        use_positional_encoding: bool = True,
+        use_gated_attention: bool = True,
     ):
         super(SurvivalModel, self).__init__()
         self.path_encoder = path_encoder
@@ -231,6 +233,8 @@ class SurvivalModel(nn.Module):
         )
         self.positional_encoder = PositionalEncoder(d_model=hidden_dim)
         self.attention_pooling = GatedAttentionPooling(hidden_dim=hidden_dim)
+        self.use_positional_encoding = use_positional_encoding
+        self.use_gated_attention = use_gated_attention
 
     def forward(self, path_x, geno_x, coordinates, mask):
         # path_x shape: Batch size x #patches x Feature dim
@@ -249,12 +253,16 @@ class SurvivalModel(nn.Module):
         coordinates = self.positional_encoder(
             coordinates
         )  # shape: Batch size x Num patches x Feature dim
-        path_features = path_features + coordinates  # add positional encoding
+        if self.use_positional_encoding:
+            path_features = path_features + coordinates  # add positional encoding
         # Self Attention Mechanism
         path_attended, _ = self.path_msa(
             path_features, path_features, path_features, key_padding_mask=mask
         )  # shape: Batch size x Num patches x Feature dim
-        path_representation, _ = self.attention_pooling(path_attended)
+        if self.use_gated_attention:
+            path_representation, _ = self.attention_pooling(path_attended)
+        else:
+            path_representation = path_attended.mean(dim=1)
         geno_features = geno_features.view(B, -1)  # shape: Batch size x Feature dim
         # concat path and genomic features
         combined_features = torch.cat(

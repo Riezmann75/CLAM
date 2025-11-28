@@ -13,6 +13,7 @@ from lib.models import (
 from lib.pre_process import load_dataset
 from lib.train import train_model_with_config
 from lib.train_utils.utils import decorate_optimizer
+import yaml
 
 import argparse
 
@@ -56,6 +57,13 @@ parser.add_argument(
     help="Path to save the training logs",
 )
 
+parser.add_argument(
+    "--config_path",
+    type=str,
+    default="model_config.yaml",
+    help="Path to the model configuration YAML file",
+)
+
 args = parser.parse_args()
 
 batch_size = args.batch_size
@@ -65,6 +73,19 @@ h5_dir = args.h5_dir
 clean_csv_path = args.clean_csv_path
 encoder_type = args.encoder
 log_path = args.log_path
+config_path = args.config_path
+
+with open(config_path, "r") as f:
+    config = yaml.safe_load(f)
+
+hidden_dim = config.get("hidden_dim", hidden_dim)
+use_positional_encoding = True
+use_gated_attention = True
+for item in config.get("architecture", []):
+    if "positional_encoding" in item:
+        use_positional_encoding = item["positional_encoding"]
+    if "gated_attention" in item:
+        use_gated_attention = item["gated_attention"]
 
 if "resnet" in encoder_type:
     assert "resnet" in features_dir, "Feature directory does not match encoder type"
@@ -121,6 +142,8 @@ grid_searcher(
         "path_encoder": path_enc.to(device),
         "geno_encoder": geno_enc.to(device),
         "hidden_dim": hidden_dim,
+        "use_positional_encoding": use_positional_encoding,
+        "use_gated_attention": use_gated_attention,
     },
     train_fn=train_model_with_config,
     loss_fn=NLL(),
