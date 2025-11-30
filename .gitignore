@@ -6,3 +6,4 @@ wsi_patches/
 experiments/
 test.*
 pretrained_encoders/
+*.txt
