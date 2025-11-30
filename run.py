@@ -60,7 +60,7 @@ parser.add_argument(
 parser.add_argument(
     "--config_path",
     type=str,
-    default="model_config.yaml",
+    default=None,
     help="Path to the model configuration YAML file",
 )
 
@@ -74,9 +74,16 @@ clean_csv_path = args.clean_csv_path
 encoder_type = args.encoder
 log_path = args.log_path
 config_path = args.config_path
-
-with open(config_path, "r") as f:
-    config = yaml.safe_load(f)
+if config_path is not None:
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+else:
+    config = {
+        "architecture": [
+            {"positional_encoding": True},
+            {"gated_attention": True},
+        ]
+    }
 
 hidden_dim = config.get("hidden_dim", hidden_dim)
 use_positional_encoding = True
