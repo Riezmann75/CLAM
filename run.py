@@ -68,7 +68,7 @@ args = parser.parse_args()
 
 batch_size = args.batch_size
 hidden_dim = args.hidden_dim
-features_dir = args.feature_dir
+extracted_dir = args.feature_dir
 h5_dir = args.h5_dir
 clean_csv_path = args.clean_csv_path
 encoder_type = args.encoder
@@ -95,17 +95,17 @@ for item in config.get("architecture", []):
         use_gated_attention = item["gated_attention"]
 
 if "resnet" in encoder_type:
-    assert "resnet" in features_dir, "Feature directory does not match encoder type"
+    assert "resnet" in extracted_dir, "Feature directory does not match encoder type"
 elif "vit" in encoder_type:
-    assert "vit" in features_dir, "Feature directory does not match encoder type"
+    assert "vit" in extracted_dir, "Feature directory does not match encoder type"
 elif "plip" in encoder_type:
-    assert "plip" in features_dir, "Feature directory does not match encoder type"
+    assert "plip" in extracted_dir, "Feature directory does not match encoder type"
 else:
-    assert "simclr" in features_dir, "Feature directory does not match encoder type"
+    assert "simclr" in extracted_dir, "Feature directory does not match encoder type"
 
 processed_data = load_dataset(
     clean_csv_path=clean_csv_path,
-    feature_dir=features_dir,
+    extracted_dir=extracted_dir,
     batch_size=batch_size,
 )
 
