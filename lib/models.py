@@ -235,6 +235,11 @@ class SurvivalModel(nn.Module):
         self.attention_pooling = GatedAttentionPooling(hidden_dim=hidden_dim)
         self.use_positional_encoding = use_positional_encoding
         self.use_gated_attention = use_gated_attention
+        self.path_mlp = nn.Sequential(
+            nn.LazyLinear(hidden_dim * 2),
+            nn.LeakyReLU(0.1),
+            nn.LazyLinear(hidden_dim),
+        )
 
     def forward(self, path_x, geno_x, coordinates, mask):
         # path_x shape: Batch size x #patches x Feature dim
@@ -263,6 +268,7 @@ class SurvivalModel(nn.Module):
             path_representation, _ = self.attention_pooling(path_attended)
         else:
             path_representation = path_attended.mean(dim=1)
+        path_representation = self.path_mlp(path_representation)
         geno_features = geno_features.view(B, -1)  # shape: Batch size x Feature dim
         # concat path and genomic features
         combined_features = torch.cat(
