@@ -105,7 +105,6 @@ else:
 
 processed_data = load_dataset(
     clean_csv_path=clean_csv_path,
-    h5_dir=h5_dir,
     feature_dir=features_dir,
     batch_size=batch_size,
 )
