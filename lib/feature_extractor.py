@@ -12,8 +12,8 @@ import torch
 
 import torch
 from transformers import AutoImageProcessor, ViTModel, CLIPProcessor, CLIPModel
-from wsi_file_sorter import compute_patch_size
-from simclr import load_model
+from lib.wsi_file_sorter import compute_patch_size
+from lib.simclr import load_model
 from torch.utils.data import DataLoader, Dataset
 
 
