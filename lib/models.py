@@ -264,11 +264,12 @@ class SurvivalModel(nn.Module):
         path_attended, _ = self.path_msa(
             path_features, path_features, path_features, key_padding_mask=mask
         )  # shape: Batch size x Num patches x Feature dim
+        path_attended = self.path_mlp(path_attended.view(B * N, -1))
+        path_attended = path_attended.view(B, N, -1)
         if self.use_gated_attention:
             path_representation, _ = self.attention_pooling(path_attended)
         else:
             path_representation = path_attended.mean(dim=1)
-        path_representation = self.path_mlp(path_representation)
         geno_features = geno_features.view(B, -1)  # shape: Batch size x Feature dim
         # concat path and genomic features
         combined_features = torch.cat(
