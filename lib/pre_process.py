@@ -13,15 +13,13 @@ from torch.utils.data import DataLoader
 class PatientDataset(Dataset):
     def __init__(
         self,
-        features_dir: str,
-        h5_dir: str,
+        extracted_dir: str,
         slide_ids: list[str],
         h5_files: list[str],
         X,
         y,
     ):
-        self.features_dir = features_dir
-        self.patches_dir = h5_dir
+        self.extracted_dir = extracted_dir
         self.slide_ids = slide_ids
         self.h5_files = h5_files
         self.X = X
@@ -38,8 +36,10 @@ class PatientDataset(Dataset):
             assert os.path.exists(h5_file), f"H5 file {h5_file} does not exist."
         for slide_id in slide_ids:
             # load tensor from extracted features
-            data = h5py.File(os.path.join(self.patches_dir, f"{slide_id}.h5"), "r")
-            extracted_path = os.path.join(self.features_dir, f"{slide_id}.pt")
+            features_dir = os.path.join(self.extracted_dir, "features")
+            coords_dir = os.path.join(self.extracted_dir, "coords")
+            data = h5py.File(os.path.join(coords_dir, f"{slide_id}.h5"), "r")
+            extracted_path = os.path.join(features_dir, f"{slide_id}.pt")
             self.coordinates.append(data["coords"][:])
             features = torch.load(extracted_path)
             self.patch_features.append(features)
@@ -82,9 +82,9 @@ def collate_fn(batch):
     return patients, patches, coordinates, clinical_outcomes, mask
 
 
-def load_dataset(clean_csv_path: str, feature_dir: str, h5_dir: str, batch_size=4):
+def load_dataset(clean_csv_path: str, extracted_dir: str, batch_size=4):
     df = pd.read_csv(clean_csv_path)
-    h5_files = os.listdir(h5_dir)
+    h5_files = os.listdir(os.path.join(extracted_dir, "coords"))
     df_filtered = df.drop(columns=["site", "oncotree_code", "train"])
     # get the patients in file_ids
     wsi_path = "./wsi_files/BLCA/"
@@ -119,24 +119,23 @@ def load_dataset(clean_csv_path: str, feature_dir: str, h5_dir: str, batch_size=
     validate_slide_ids = [slide_id.split(".svs")[0] for slide_id in validate_slide_ids]
 
     train_h5_files = [
-        os.path.join(h5_dir, h5_file)
+        os.path.join(extracted_dir, "coords", h5_file)
         for h5_file in h5_files
         if h5_file in train_slide_ids
     ]
     test_h5_files = [
-        os.path.join(h5_dir, h5_file)
+        os.path.join(extracted_dir, "coords", h5_file)
         for h5_file in h5_files
         if h5_file in test_slide_ids
     ]
     validate_h5_files = [
-        os.path.join(h5_dir, h5_file)
+        os.path.join(extracted_dir, "coords", h5_file)
         for h5_file in h5_files
         if h5_file in validate_slide_ids
     ]
 
     train_dataset = PatientDataset(
-        features_dir=feature_dir,
-        h5_dir=h5_dir,
+        extracted_dir=extracted_dir,
         slide_ids=train_slide_ids,
         h5_files=train_h5_files,
         X=X_train.reset_index(drop=True),
@@ -144,8 +143,7 @@ def load_dataset(clean_csv_path: str, feature_dir: str, h5_dir: str, batch_size=
     )
 
     test_dataset = PatientDataset(
-        features_dir=feature_dir,
-        h5_dir=h5_dir,
+        extracted_dir=extracted_dir,
         slide_ids=test_slide_ids,
         h5_files=test_h5_files,
         X=X_test.reset_index(drop=True),
@@ -153,8 +151,7 @@ def load_dataset(clean_csv_path: str, feature_dir: str, h5_dir: str, batch_size=
     )
 
     validate_dataset = PatientDataset(
-        features_dir=feature_dir,
-        h5_dir=h5_dir,
+        extracted_dir=extracted_dir,
         slide_ids=validate_slide_ids,
         h5_files=validate_h5_files,
         X=X_validate.reset_index(drop=True),

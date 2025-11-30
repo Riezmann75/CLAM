@@ -12,8 +12,8 @@ import torch
 
 import torch
 from transformers import AutoImageProcessor, ViTModel, CLIPProcessor, CLIPModel
-from lib.wsi_file_sorter import compute_patch_size
-from lib.simclr import load_model
+from wsi_file_sorter import compute_patch_size
+from simclr import load_model
 from torch.utils.data import DataLoader, Dataset
 
 
@@ -51,7 +51,7 @@ class WSIPatchDataset(Dataset):
         if self.transform:
             patch = self.transform(patch)
 
-        return patch
+        return patch, coord
 
 
 class PLIPFeatureExtractor(nn.Module):
@@ -170,9 +170,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
-    extracted_slides = os.listdir(args.output_dir)
+    os.makedirs(os.path.join(args.output_dir, "features"), exist_ok=True)
+    os.makedirs(os.path.join(args.output_dir, "coords"), exist_ok=True)
+    extracted_slides = os.listdir(os.path.join(args.output_dir, "features"))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if args.feature_extractor == "vit":
         model = ViTFeatureExtractor().to(device)
@@ -232,10 +232,37 @@ if __name__ == "__main__":
         )
         loader = DataLoader(dataset, batch_size=32, num_workers=8, pin_memory=True)
         features = []
-        for batch_patches in tqdm(loader, desc=f"Processing {slide_id}"):
+        coords = []
+        for batch_patches, batch_coords in tqdm(loader, desc=f"Processing {slide_id}"):
             with torch.no_grad():
                 batch_features = model(batch_patches.to(device))
                 features.append(batch_features.cpu())
+                coords.append(batch_coords)
 
+        # rescale original coordinates to target magnification
+        coords = torch.cat(coords, dim=0)
+        x_coords = coords[:, 0]  # shape: (num_patches,)
+        y_coords = coords[:, 1]  # shape: (num_patches,)
+        x_coords = x_coords - torch.min(x_coords)
+        y_coords = y_coords - torch.min(y_coords)
+        x_coords = x_coords / patch_size
+        y_coords = y_coords / patch_size  # shape: (num_patches,)
+
+        x_coords = x_coords.round()
+        y_coords = y_coords.round()
+
+        coords = torch.cat(
+            [x_coords.unsqueeze(1), y_coords.unsqueeze(1)], dim=1
+        )  # shape: (num_patches, 2)
         features = torch.cat(features, dim=0)
-        torch.save(features, f"{args.output_dir}/{slide_id}.pt")
+        print(coords.shape, features.shape)
+        assert len(coords) == len(features)
+
+        # save into h5_files
+        os.makedirs(os.path.join(args.output_dir, "coords"), exist_ok=True)
+        with h5py.File(f"{args.output_dir}/coords/{slide_id}.h5", "w") as f:
+            f.create_dataset("coords", data=coords.numpy())
+
+        # save features into tensor
+        os.makedirs(os.path.join(args.output_dir, "features"), exist_ok=True)
+        torch.save(features, f"{args.output_dir}/features/{slide_id}.pt")
