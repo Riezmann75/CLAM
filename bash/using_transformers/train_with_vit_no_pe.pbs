@@ -18,4 +18,4 @@ conda activate clam_latest
 #check
 conda info --envs
 
-python run.py --batch_size 16 --config_path yaml/model_config_no_pe.yaml --hidden_dim 128 --feature_dir wsi_patches/BLCA/features/BLCA_vit --h5_dir wsi_patches/BLCA/patches/ --clean_csv_path dataset_csv/tcga_blca_all_clean.csv --encoder vit --log_path experiments/result_vit_no_pe_ga.jsonl
+python run.py --batch_size 16 --config_path yaml/model_config_no_pe.yaml --hidden_dim 128 --feature_dir wsi_patches/BLCA/features/BLCA_vit --h5_dir wsi_patches/BLCA/patches/ --clean_csv_path dataset_csv/tcga_blca_all_clean.csv --encoder vit --log_path experiments/transformers/result_vit_no_pe.jsonl
