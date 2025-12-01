@@ -152,4 +152,30 @@ def train_model_with_config(
             clinical_outcomes_list[:, 0],
             clinical_outcomes_list[:, 1],
         )
-    return avg_losses, val_losses, c_index_value, train_c_index_value
+    
+    # cindex on validation set
+    model.eval()
+    with torch.no_grad():
+        collected_preds = []
+        clinical_outcomes_list = []
+        for patient, patches, coordinates, clinical_outcomes, mask in validation_loader:
+            patches = patches.to(device)
+            patient = patient.to(device)
+            coordinates = coordinates.to(device)
+            clinical_outcomes = clinical_outcomes.to(device)
+            mask = ~mask.to(device)  # invert mask for key_padding_mask
+            preds = model(patches, patient, coordinates, mask)
+            collected_preds.append(preds.cpu())
+            clinical_outcomes_list.append(clinical_outcomes.cpu())
+        clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
+        clinical_outcomes_list = clinical_outcomes_list.squeeze()
+        collected_preds = torch.concat(collected_preds, dim=0)
+        collected_preds = collected_preds.squeeze()
+        clinical_outcomes_list = clinical_outcomes_list.squeeze()
+        val_c_index_value = c_index(
+            collected_preds,
+            clinical_outcomes_list[:, 0],
+            clinical_outcomes_list[:, 1],
+        )  
+
+    return avg_losses, val_losses, c_index_value, train_c_index_value, val_c_index_value

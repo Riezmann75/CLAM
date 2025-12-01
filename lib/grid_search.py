@@ -61,6 +61,7 @@ class GridSearch:
                                 val_losses,
                                 c_index_value,
                                 train_c_index_value,
+                                val_c_index_value,
                             ) = train_fn(
                                 model=model,
                                 optimizer=configured_optimizer,
@@ -85,6 +86,7 @@ class GridSearch:
                                     "val_losses": val_losses,
                                     "test_c_index": c_index_value,
                                     "train_c_index": train_c_index_value,
+                                    "val_c_index": val_c_index_value,
                                 }
                             )
                         except StopTrainingError as e:
@@ -106,7 +108,8 @@ class GridSearch:
                                     "avg_losses": None,
                                     "val_losses": None,
                                     "c_index": None,
-                                    "train_c_index": train_c_index_value,
+                                    "train_c_index": None,
+                                    "val_c_index": None,
                                     "error": str(e),
                                 }
                             )
