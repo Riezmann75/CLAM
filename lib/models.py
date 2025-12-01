@@ -266,9 +266,6 @@ class SurvivalModel(nn.Module):
         path_attended, _ = self.path_msa(
             path_features, path_features, path_features, key_padding_mask=mask
         )  # shape: Batch size x Num patches x Feature dim
-        path_attended = path_attended.reshape(B * N, -1)
-        path_attended = self.path_mlp(path_attended)
-        path_attended = path_attended.reshape(B, N, -1)
         if self.use_gated_attention:
             path_representation, _ = self.attention_pooling(path_attended)
         else:
