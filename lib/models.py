@@ -219,6 +219,7 @@ class SurvivalModel(nn.Module):
         hidden_dim: int = 128,
         use_positional_encoding: bool = True,
         use_gated_attention: bool = True,
+        use_transformer: bool = False,
     ):
         super(SurvivalModel, self).__init__()
         self.path_encoder = path_encoder
@@ -235,16 +236,28 @@ class SurvivalModel(nn.Module):
             d_model=hidden_dim, max_width=1000, max_height=1000
         )
         self.attention_pooling = GatedAttentionPooling(hidden_dim=hidden_dim)
-        self.use_positional_encoding = use_positional_encoding
-        self.use_gated_attention = use_gated_attention
         self.path_mlp = nn.Sequential(
             nn.LazyLinear(hidden_dim * 2),
             nn.LeakyReLU(0.1),
             nn.LazyLinear(hidden_dim),
         )
+        self.transformer = nn.TransformerEncoderLayer(
+            d_model=hidden_dim,
+            nhead=4,
+            dim_feedforward=hidden_dim * 2,
+            batch_first=True,
+            norm_first=True,
+        )
+        self.cls_token = nn.Parameter(torch.randn(1, 1, hidden_dim))
+        self.use_positional_encoding = use_positional_encoding
+        self.use_gated_attention = use_gated_attention
+        self.use_transformer = use_transformer
+        assert self.use_gated_attention + self.use_transformer <= 1, "Cannot use both gated attention and transformer cls token pooling."
 
     def forward(self, path_x, geno_x, coordinates, mask):
         # path_x shape: Batch size x #patches x Feature dim
+        # coordinates shape: Batch size x #patches x 2
+
         # flatten:
         B, N, *hidden_dims = path_x.shape
         # reshape to B*N x Feature dim
@@ -257,17 +270,37 @@ class SurvivalModel(nn.Module):
             B, N, -1
         )  # shape: Batch size x Num patches x Feature dim
         geno_features = self.geno_encoder(geno_x)  # shape: Batch size x Feature dim
-        coordinates = self.positional_encoder(
-            coordinates
-        )  # shape: Batch size x Num patches x Feature dim
         if self.use_positional_encoding:
+            coordinates = self.positional_encoder(
+                coordinates
+            )  # shape: Batch size x Num patches x Feature dim
             path_features = path_features + coordinates  # add positional encoding
         # Self Attention Mechanism
-        path_attended, _ = self.path_msa(
-            path_features, path_features, path_features, key_padding_mask=mask
-        )  # shape: Batch size x Num patches x Feature dim
+        if self.use_transformer:
+            cls_tokens = self.cls_token.expand(
+                B, -1, -1
+            )  # shape: Batch size x 1 x Feature dim
+            path_features = torch.cat(
+                (cls_tokens, path_features), dim=1
+            )  # shape: Batch size x (1 + Num patches) x Feature dim
+            # update mask to account for cls token
+            cls_mask = torch.zeros((B, 1), dtype=torch.bool, device=mask.device)
+            mask = torch.cat(
+                (cls_mask, mask), dim=1
+            )  # shape: Batch size x (1 + Num patches)
+            path_attended = self.transformer(path_features, src_key_padding_mask=mask)
+            # extract cls token representation
+        else:
+            path_attended, _ = self.path_msa(
+                path_features, path_features, path_features, key_padding_mask=mask
+            )  # shape: Batch size x Num patches x Feature dim
+
         if self.use_gated_attention:
             path_representation, _ = self.attention_pooling(path_attended)
+        elif self.use_transformer:
+            path_representation = path_attended[
+                :, 0, :
+            ]  # shape: Batch size x Feature dim
         else:
             path_representation = path_attended.mean(dim=1)
         geno_features = geno_features.view(B, -1)  # shape: Batch size x Feature dim
