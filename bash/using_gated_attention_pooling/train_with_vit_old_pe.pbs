@@ -1,11 +1,11 @@
 #!/bin/bash
 #PBS -l walltime=10:00:00
 #PBS -l select=1:ngpus=1:mem=32GB
-#PBS -q normal
+#PBS -q ai
 #PBS -P 12004268
-#PBS -N train_with_vit_pe
+#PBS -N old_with_pe
 #PBS -j oe
-#PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/train_with_vit_pe.txt
+#PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/old_pos_enc/train_with_vit_pe.txt
 #PBS -M giabao.cao@ntu.edu.sg
 #PBS -m abe
 
@@ -18,4 +18,4 @@ conda activate clam_latest
 #check
 conda info --envs
 
-python run.py --batch_size 16 --config_path yaml/gated_attention/model_config_pe.yaml --hidden_dim 128 --feature_dir wsi_patches/BLCA/features_no_position_scale/BLCA_vit --h5_dir wsi_patches/BLCA/patches/ --clean_csv_path dataset_csv/tcga_blca_all_clean.csv --encoder vit --log_path experiments/re_run_with_new_pos_enc/result_vit_pe_old_pe.jsonl
+python run.py --batch_size 16 --config_path yaml/gated_attention/model_config_pe.yaml --hidden_dim 128 --feature_dir wsi_patches/BLCA/features_no_position_scale/BLCA_vit --h5_dir wsi_patches/BLCA/patches/ --clean_csv_path dataset_csv/tcga_blca_all_clean.csv --encoder vit --log_path experiments/old_pos_enc/result_vit_pe.jsonl
