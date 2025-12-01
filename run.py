@@ -81,18 +81,22 @@ else:
     config = {
         "architecture": [
             {"positional_encoding": True},
-            {"gated_attention": True},
+            {"gated_attention": False},
+            {"transformer": True},
         ]
     }
 
 hidden_dim = config.get("hidden_dim", hidden_dim)
 use_positional_encoding = True
-use_gated_attention = True
+use_gated_attention = False
+use_transformer = False
 for item in config.get("architecture", []):
     if "positional_encoding" in item:
         use_positional_encoding = item["positional_encoding"]
     if "gated_attention" in item:
         use_gated_attention = item["gated_attention"]
+    if "transformer" in item:
+        use_transformer = item["transformer"]
 
 if "resnet" in encoder_type:
     assert "resnet" in extracted_dir, "Feature directory does not match encoder type"
@@ -150,6 +154,7 @@ grid_searcher(
         "hidden_dim": hidden_dim,
         "use_positional_encoding": use_positional_encoding,
         "use_gated_attention": use_gated_attention,
+        "use_transformer": use_transformer,
     },
     train_fn=train_model_with_config,
     loss_fn=NLL(),

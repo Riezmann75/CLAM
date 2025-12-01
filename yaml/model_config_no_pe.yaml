@@ -1,4 +1,5 @@
 hidden_dim: 128
 architecture:
-  - positional_encoding: false 
+  - positional_encoding: false
   - gated_attention: false
+  - transformer: true
