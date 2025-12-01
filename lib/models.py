@@ -231,7 +231,9 @@ class SurvivalModel(nn.Module):
         self.geno_msa = nn.MultiheadAttention(
             embed_dim=hidden_dim, num_heads=4, batch_first=True
         )
-        self.positional_encoder = PositionalEncoder(d_model=hidden_dim)
+        self.positional_encoder = PositionalEncoder(
+            d_model=hidden_dim, max_width=1000, max_height=1000
+        )
         self.attention_pooling = GatedAttentionPooling(hidden_dim=hidden_dim)
         self.use_positional_encoding = use_positional_encoding
         self.use_gated_attention = use_gated_attention
@@ -264,9 +266,9 @@ class SurvivalModel(nn.Module):
         path_attended, _ = self.path_msa(
             path_features, path_features, path_features, key_padding_mask=mask
         )  # shape: Batch size x Num patches x Feature dim
-        path_attended = path_attended.reshape(B * N, -1)
-        path_attended = self.path_mlp(path_attended)
-        path_attended = path_attended.reshape(B, N, -1)
+        # path_attended = path_attended.reshape(B * N, -1)
+        # path_attended = self.path_mlp(path_attended)
+        # path_attended = path_attended.reshape(B, N, -1)
         if self.use_gated_attention:
             path_representation, _ = self.attention_pooling(path_attended)
         else:
