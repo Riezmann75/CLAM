@@ -22,6 +22,7 @@ def plot_training_curves(current_path, result_logs, y_lim=None, num_cols=2):
             val_losses = result_logs[i * num_cols + j].get("val_losses")
             test_c_index = result_logs[i * num_cols + j].get("test_c_index")
             train_c_index = result_logs[i * num_cols + j].get("train_c_index")
+            val_c_index = result_logs[i * num_cols + j].get("val_c_index")
             config = result_logs[i * num_cols + j].get("config")
             optimizer = (
                 "Adam" if "adam" in config.get("optimizer").get("name") else "SGD"
@@ -41,9 +42,8 @@ def plot_training_curves(current_path, result_logs, y_lim=None, num_cols=2):
                         range(1, len(val_losses) + 1), val_losses, marker="o"
                     )
                     axes[i, j].set_title(
-                        f"Optimizer: {optimizer}, LR: {lr}, weight_decay: {weight_decay}, Test C-index: {test_c_index:.4f}, Train C-index: {train_c_index:.4f}",
-                        size=10,
-                        pad=10,
+                        f"LR: {lr}, Test C-index: {test_c_index:.4f}, Train C-index: {train_c_index:.4f}, Val C-index: {val_c_index:.4f}",
+                        size=14,
                     )
                     axes[i, j].set_xlabel("Epoch")
                     if y_lim is not None:
@@ -106,9 +106,9 @@ def plot_top_configs(
     with open(log_path, "r") as f:
         result_logs = [json.loads(line) for line in f.readlines()]
         result_logs = [
-            log for log in result_logs if log.get("test_c_index") is not None
+            log for log in result_logs if log.get("val_c_index") is not None
         ]
-        result_logs = sorted(result_logs, key=lambda x: x["test_c_index"], reverse=True)
+        result_logs = sorted(result_logs, key=lambda x: x["val_c_index"], reverse=True)
         # select top 2 results
         top_k_results = result_logs[:top_k]
         plot_training_curves(experiment_path, top_k_results, y_lim=y_lim)

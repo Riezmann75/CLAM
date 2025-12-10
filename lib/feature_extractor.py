@@ -1,5 +1,6 @@
 import math
 import os
+import pdb
 import time
 import h5py
 import numpy as np
@@ -18,7 +19,15 @@ from torch.utils.data import DataLoader, Dataset
 
 
 class WSIPatchDataset(Dataset):
-    def __init__(self, slide_path, coords, patch_level, patch_size, transform=None):
+    def __init__(
+        self,
+        slide_path,
+        coords,
+        patch_level,
+        patch_size,
+        processor=None,
+        transform=None,
+    ):
         """
         Args:
             data_list (list): List of tuples containing (patient_id, patches, coordinates, clinical_outcomes, mask)
@@ -29,6 +38,7 @@ class WSIPatchDataset(Dataset):
         self.patch_size = patch_size
         self.transform = transform
         self.wsi = None
+        self.processor = processor
 
     def __len__(self):
         return len(self.coords)
@@ -51,6 +61,8 @@ class WSIPatchDataset(Dataset):
         if self.transform:
             patch = self.transform(patch)
 
+        if self.processor:
+            patch = self.processor(patch, return_tensors="pt")
         return patch, coord
 
 
@@ -90,6 +102,34 @@ class ViTFeatureExtractor(nn.Module):
         return x
 
 
+class ViTMLPInputExtractor(nn.Module):
+    def __init__(self):
+        super(ViTMLPInputExtractor, self).__init__()
+        self.image_processor = AutoImageProcessor.from_pretrained(
+            "owkin/phikon", use_fast=True
+        )
+        self.model = ViTModel.from_pretrained("owkin/phikon", add_pooling_layer=False)
+        self._pre_mlp_features = None
+        self.hook_handle = self.model.encoder.layer[
+            -1
+        ].layernorm_after.register_forward_hook(self._hook_mlp)
+
+    def _hook_mlp(self, model, input, output):
+        self._pre_mlp_features = input[0]
+
+    def forward(self, x):
+        # shape x: (batch_size, 3, 224, 224)
+        pdb.set_trace()
+        _ = self.model(x.pixel_values.squeeze(1))
+
+        full_sequence = (
+            self._pre_mlp_features
+        )  # shape (batch_size, seq_len, hidden_dim)
+        cls_token_pre_mlp = full_sequence[:, 0, :]
+
+        return cls_token_pre_mlp
+
+
 class ResNet18FeatureExtractor(nn.Module):
     def __init__(self):
         super(ResNet18FeatureExtractor, self).__init__()
@@ -97,6 +137,7 @@ class ResNet18FeatureExtractor(nn.Module):
         self.features = nn.Sequential(
             *list(self.resnet18.children())[:6]
         )  # stop before layer 3
+        self.image_processor = None
 
     def forward(self, x):
         # shape x: (batch_size, 3, 224, 224)
@@ -113,6 +154,7 @@ class SimCLRFeatureExtractor(nn.Module):
             if device is None
             else device
         )
+        self.image_processor = None
 
     def forward(self, x):
         # shape x: (batch_size, 3, 224, 224)
@@ -158,7 +200,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--feature_extractor",
         type=str,
-        choices=["resnet", "vit", "plip", "simclr"],
+        choices=["resnet", "vit", "vit_mlp", "plip", "simclr"],
         help="Feature extractor to use",
     )
     parser.add_argument(
@@ -176,6 +218,8 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if args.feature_extractor == "vit":
         model = ViTFeatureExtractor().to(device)
+    if args.feature_extractor == "vit_mlp":
+        model = ViTMLPInputExtractor().to(device)
     elif args.feature_extractor == "plip":
         model = PLIPFeatureExtractor().to(device)
     elif args.feature_extractor == "simclr":
@@ -185,31 +229,22 @@ if __name__ == "__main__":
         model = ResNet18FeatureExtractor().to(device)
     h5_file_path = args.h5_dir
     h5_files = os.listdir(h5_file_path)
-    print(extracted_slides)
     for h5_file in tqdm(h5_files):
         slide_id = h5_file.split(".h5")[0]
         if slide_id + ".pt" in extracted_slides:
             continue
-        start = time.time()
         data = h5py.File(os.path.join(h5_file_path, h5_file), "r")
-        end = time.time()
-        print(f"Time to read h5 file: {end - start} seconds")
-        start = time.time()
         wsi = openslide.open_slide(
             f"{args.wsi_dir}/{h5_file.split('/')[-1].split('.h5')[0]}.svs"
         )
-        end = time.time()
-        print(f"Time to open WSI file: {end - start} seconds")
         patches = []
-
         patch_size = compute_patch_size(
             wsi_path=f"{args.wsi_dir}/{h5_file.split('/')[-1].split('.h5')[0]}.svs",
             target_magnification=args.target_magnification,
             patch_level=args.patch_level,
         )
-
+        
         batch_size = 32
-        print(f"Total number of patches: {len(data['coords'][:])}")
         batches = np.array_split(
             data["coords"][:], math.ceil(len(data["coords"][:]) / batch_size)
         )
@@ -222,15 +257,16 @@ if __name__ == "__main__":
                 transforms.ToTensor(),
             ]
         )
-        print(f"Patch size: {patch_size}, Target patch size: {args.target_patch_size}")
+
         dataset = WSIPatchDataset(
             slide_path=f"{args.wsi_dir}/{h5_file.split('/')[-1].split('.h5')[0]}.svs",
             coords=data["coords"][:],
             patch_level=args.patch_level,
             patch_size=patch_size,
             transform=patch_transforms,
+            processor=model.image_processor,
         )
-        loader = DataLoader(dataset, batch_size=32, num_workers=8, pin_memory=True)
+        loader = DataLoader(dataset, batch_size=2, num_workers=0, pin_memory=True)
         features = []
         coords = []
         for batch_patches, batch_coords in tqdm(loader, desc=f"Processing {slide_id}"):
@@ -255,7 +291,7 @@ if __name__ == "__main__":
             [x_coords.unsqueeze(1), y_coords.unsqueeze(1)], dim=1
         )  # shape: (num_patches, 2)
         features = torch.cat(features, dim=0)
-        print(coords.shape, features.shape)
+
         assert len(coords) == len(features)
 
         # save into h5_files
