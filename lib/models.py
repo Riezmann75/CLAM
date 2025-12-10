@@ -220,6 +220,7 @@ class SurvivalModel(nn.Module):
         use_positional_encoding: bool = True,
         use_gated_attention: bool = True,
         use_transformer: bool = False,
+        unimodal: bool = True,
     ):
         super(SurvivalModel, self).__init__()
         self.path_encoder = path_encoder
@@ -252,7 +253,10 @@ class SurvivalModel(nn.Module):
         self.use_positional_encoding = use_positional_encoding
         self.use_gated_attention = use_gated_attention
         self.use_transformer = use_transformer
-        assert self.use_gated_attention + self.use_transformer <= 1, "Cannot use both gated attention and transformer cls token pooling."
+        assert (
+            self.use_gated_attention + self.use_transformer <= 1
+        ), "Cannot use both gated attention and transformer cls token pooling."
+        self.unimodal = unimodal
 
     def forward(self, path_x, geno_x, coordinates, mask):
         # path_x shape: Batch size x #patches x Feature dim
@@ -269,7 +273,7 @@ class SurvivalModel(nn.Module):
         path_features = path_features.view(
             B, N, -1
         )  # shape: Batch size x Num patches x Feature dim
-        geno_features = self.geno_encoder(geno_x)  # shape: Batch size x Feature dim
+
         if self.use_positional_encoding:
             coordinates = self.positional_encoder(
                 coordinates
@@ -303,6 +307,11 @@ class SurvivalModel(nn.Module):
             ]  # shape: Batch size x Feature dim
         else:
             path_representation = path_attended.mean(dim=1)
+
+        if self.unimodal:
+            preds = self.fc(path_representation)  # shape: Batch size x 1
+            return preds.squeeze()  # shape: Batch size
+        geno_features = self.geno_encoder(geno_x)  # shape: Batch size x Feature dim
         geno_features = geno_features.view(B, -1)  # shape: Batch size x Feature dim
         # concat path and genomic features
         combined_features = torch.cat(

@@ -46,7 +46,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--encoder",
-    choices=["resnet", "vit", "plip", "simclr"],
+    choices=["resnet", "vit", "vit_mlp", "plip", "simclr"],
     default="resnet",
     help="Type of path encoder to use",
 )
@@ -102,6 +102,8 @@ if "resnet" in encoder_type:
     assert "resnet" in extracted_dir, "Feature directory does not match encoder type"
 elif "vit" in encoder_type:
     assert "vit" in extracted_dir, "Feature directory does not match encoder type"
+elif "vit_mlp" in encoder_type:
+    assert "vit_mlp" in extracted_dir, "Feature directory does not match encoder type"
 elif "plip" in encoder_type:
     assert "plip" in extracted_dir, "Feature directory does not match encoder type"
 else:
@@ -116,6 +118,8 @@ processed_data = load_dataset(
 if args.encoder == "resnet":
     path_enc = ResnetEncoder(hidden_dim=hidden_dim)
 elif args.encoder == "vit":
+    path_enc = ImageEncoder(hidden_dim=hidden_dim)
+elif args.encoder == "vit_mlp":
     path_enc = ImageEncoder(hidden_dim=hidden_dim)
 elif args.encoder == "plip":
     path_enc = ImageEncoder(hidden_dim=hidden_dim)
