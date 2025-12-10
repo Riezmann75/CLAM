@@ -119,7 +119,6 @@ class ViTMLPInputExtractor(nn.Module):
 
     def forward(self, x):
         # shape x: (batch_size, 3, 224, 224)
-        pdb.set_trace()
         _ = self.model(x.pixel_values.squeeze(1))
 
         full_sequence = (
