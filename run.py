@@ -17,6 +17,9 @@ import yaml
 
 import argparse
 
+torch.manual_seed(42)
+np.random.seed(42)
+
 parser = argparse.ArgumentParser(
     description="Run the survival model training with grid search."
 )
