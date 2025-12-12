@@ -84,6 +84,7 @@ class ViTHeadEncoder(nn.Module):
             self.fc2.bias.copy_(original_layer.output.dense.bias)
 
     def forward(self, x):
+        # shape x: batch size * seq len * input_dim
         x_norm = self.norm(x)
         x_intermediate = self.fc1(x_norm)
         x_activated = self.act(x_intermediate)
@@ -93,7 +94,7 @@ class ViTHeadEncoder(nn.Module):
         if self.final_fc is not None:
             x = self.final_fc(output)
             return x
-        return output  # Residual connection shape: batch size * input_dim
+        return output[:, 0, :]  # return cls token representation batch size * output_dim
 
 
 class GatedAttentionPooling(nn.Module):

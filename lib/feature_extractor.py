@@ -123,10 +123,9 @@ class ViTMLPInputExtractor(nn.Module):
 
         full_sequence = (
             self._pre_mlp_features
-        )  # shape (batch_size, seq_len, hidden_dim)
-        cls_token_pre_mlp = full_sequence[:, 0, :]
+        )  # shape (batch_size, #small_patches + 1, 768)
 
-        return cls_token_pre_mlp
+        return full_sequence
 
 
 class ResNet18FeatureExtractor(nn.Module):
@@ -265,7 +264,7 @@ if __name__ == "__main__":
             transform=patch_transforms,
             processor=model.image_processor,
         )
-        loader = DataLoader(dataset, batch_size=2, num_workers=0, pin_memory=True)
+        loader = DataLoader(dataset, batch_size=8, num_workers=4, pin_memory=True)
         features = []
         coords = []
         for batch_patches, batch_coords in tqdm(loader, desc=f"Processing {slide_id}"):
