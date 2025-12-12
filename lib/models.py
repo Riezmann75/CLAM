@@ -62,16 +62,16 @@ class ViTHeadEncoder(nn.Module):
         self.norm = nn.LayerNorm(input_dim)
 
         # The "Intermediate" (Expansion) part
-        self.fc1 = nn.LazyLinear(hidden_dim)
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.act = nn.GELU()
 
         # The "Output" (Contraction) part
-        self.fc2 = nn.LazyLinear(hidden_dim)
+        self.fc2 = nn.Linear(input_dim, hidden_dim)
         self.dropout = nn.Dropout(0.0)  # Phikon default is 0.0
 
         self.output_dim = output_dim if output_dim is not None else hidden_dim
         if self.output_dim != hidden_dim:
-            self.final_fc = nn.LazyLinear(self.output_dim)
+            self.final_fc = nn.Linear(input_dim, self.output_dim)
         else:
             self.final_fc = None
 
