@@ -3,9 +3,9 @@
 #PBS -l select=1:ngpus=1:mem=32GB
 #PBS -q normal
 #PBS -P 12004268
-#PBS -N transformers_no_pe
+#PBS -N transformers_mlp_no_pe
 #PBS -j oe
-#PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/transformers/train_with_vit_no_pe.txt
+#PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/transformers/train_with_vit_mlp_no_pe.txt
 #PBS -M giabao.cao@ntu.edu.sg
 #PBS -m abe
 
@@ -18,4 +18,4 @@ conda activate clam_latest
 #check
 conda info --envs
 
-HF_HOME=./hf_cache python run.py --batch_size 16 --config_path yaml/transformers/model_config_no_pe.yaml --hidden_dim 128 --feature_dir wsi_patches/BLCA/features/BLCA_vit_mlp --h5_dir wsi_patches/BLCA/patches/ --clean_csv_path dataset_csv/tcga_blca_all_clean.csv --encoder vit --log_path experiments/transformers/result_vit_no_pe.jsonl
+HF_HOME=./hf_cache python run.py --batch_size 16 --config_path yaml/transformers/model_config_no_pe.yaml --hidden_dim 1536 --feature_dir wsi_patches/BLCA/features/BLCA_vit_mlp --h5_dir wsi_patches/BLCA/patches/ --clean_csv_path dataset_csv/tcga_blca_all_clean.csv --encoder vit_mlp --log_path experiments/transformers/result_vit_mlp_no_pe.jsonl

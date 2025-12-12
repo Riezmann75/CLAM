@@ -9,6 +9,7 @@ from lib.models import (
     ImageEncoder,
     ResnetEncoder,
     SurvivalModel,
+    ViTHeadEncoder,
 )
 from lib.pre_process import load_dataset
 from lib.train import train_model_with_config
@@ -123,7 +124,7 @@ if args.encoder == "resnet":
 elif args.encoder == "vit":
     path_enc = ImageEncoder(hidden_dim=hidden_dim)
 elif args.encoder == "vit_mlp":
-    path_enc = ImageEncoder(hidden_dim=hidden_dim)
+    path_enc = ViTHeadEncoder(input_dim=768, hidden_dim=768*2, output_dim=hidden_dim)
 elif args.encoder == "plip":
     path_enc = ImageEncoder(hidden_dim=hidden_dim)
 elif args.encoder == "simclr":
@@ -143,7 +144,7 @@ loss = NLL()
 
 search_space = SearchSpace.model_validate(
     {
-        "learning_rates": np.arange(6e-5, 3e-4, step=2e-5).tolist(),
+        "learning_rates": [6e-5, 2e-4, 3e-4],
         "weight_decays": [1e-4],
         "optimizers": [
             decorate_optimizer(torch.optim.Adam),

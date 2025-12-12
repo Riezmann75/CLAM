@@ -44,6 +44,25 @@ class ImageEncoder(nn.Module):
         return x
 
 
+class ViTHeadEncoder(nn.Module):
+    def __init__(
+        self, input_dim: int, hidden_dim: int, output_dim: int = 128, **kwargs
+    ):
+        super(ViTHeadEncoder, self).__init__()
+        self.fc = nn.Sequential(
+            nn.LayerNorm(normalized_shape=input_dim),
+            nn.LazyLinear(hidden_dim),
+            nn.SELU(),
+            nn.Dropout(0.2),
+            nn.LazyLinear(input_dim),
+            nn.LazyLinear(output_dim),
+        )
+
+    def forward(self, x):
+        x = self.fc(x)
+        return x
+
+
 class GatedAttentionPooling(nn.Module):
     def __init__(self, hidden_dim: int):
         super(GatedAttentionPooling, self).__init__()
