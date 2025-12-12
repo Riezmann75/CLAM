@@ -74,14 +74,14 @@ class ViTHeadEncoder(nn.Module):
             self.final_fc = nn.Linear(input_dim, self.output_dim)
         else:
             self.final_fc = None
-
-        with torch.no_grad():
-            self.norm.weight.copy_(original_layer.layernorm_after.weight)
-            self.norm.bias.copy_(original_layer.layernorm_after.bias)
-            self.fc1.weight.copy_(original_layer.intermediate.dense.weight)
-            self.fc1.bias.copy_(original_layer.intermediate.dense.bias)
-            self.fc2.weight.copy_(original_layer.output.dense.weight)
-            self.fc2.bias.copy_(original_layer.output.dense.bias)
+            
+        # 3. Copy weights from the original model to the new layers
+        self.norm.weight.copy_(original_layer.layernorm_after.weight)
+        self.norm.bias.copy_(original_layer.layernorm_after.bias)
+        self.fc1.weight.copy_(original_layer.intermediate.dense.weight)
+        self.fc1.bias.copy_(original_layer.intermediate.dense.bias)
+        self.fc2.weight.copy_(original_layer.output.dense.weight)
+        self.fc2.bias.copy_(original_layer.output.dense.bias)
 
     def forward(self, x):
         x_norm = self.norm(x)
