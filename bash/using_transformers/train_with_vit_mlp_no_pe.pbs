@@ -18,4 +18,4 @@ conda activate clam_latest
 #check
 conda info --envs
 
-HF_HOME=./hf_cache python run.py --batch_size 16 --config_path yaml/transformers/model_config_no_pe.yaml --hidden_dim 1536 --feature_dir wsi_patches/BLCA/features/BLCA_vit_mlp --h5_dir wsi_patches/BLCA/patches/ --clean_csv_path dataset_csv/tcga_blca_all_clean.csv --encoder vit_mlp --log_path experiments/transformers/result_vit_mlp_no_pe.jsonl
+HF_HOME=./hf_cache python run.py --batch_size 16 --config_path yaml/transformers/model_config_no_pe.yaml --hidden_dim 1536 --feature_dir wsi_patches/BLCA/features/BLCA_vit_mlp --h5_dir wsi_patches/BLCA/patches/ --clean_csv_path dataset_csv/tcga_blca_all_clean.csv --encoder vit_mlp --log_path experiments/vit_finetuning/result_vit_mlp_no_pe.jsonl

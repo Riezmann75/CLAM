@@ -68,6 +68,13 @@ parser.add_argument(
     help="Path to the model configuration YAML file",
 )
 
+parser.add_argument(
+    "--num_transformer_layers",
+    type=int,
+    default=2,
+    help="Number of transformer layers if transformer is used",
+)
+
 args = parser.parse_args()
 
 batch_size = args.batch_size
@@ -78,6 +85,7 @@ clean_csv_path = args.clean_csv_path
 encoder_type = args.encoder
 log_path = args.log_path
 config_path = args.config_path
+num_transformer_layers = args.num_transformer_layers
 if config_path is not None:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
@@ -144,7 +152,7 @@ loss = NLL()
 
 search_space = SearchSpace.model_validate(
     {
-        "learning_rates": [6e-5, 2e-4, 3e-4],
+        "learning_rates": [6e-5, 2e-4, 3e-4, 1e-3, 5e-3],
         "weight_decays": [1e-4],
         "optimizers": [
             decorate_optimizer(torch.optim.Adam),
@@ -163,6 +171,7 @@ grid_searcher(
         "use_positional_encoding": use_positional_encoding,
         "use_gated_attention": use_gated_attention,
         "use_transformer": use_transformer,
+        "num_transformer_layers": num_transformer_layers,
     },
     train_fn=train_model_with_config,
     loss_fn=NLL(),

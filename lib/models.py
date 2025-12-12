@@ -273,6 +273,7 @@ class SurvivalModel(nn.Module):
         use_gated_attention: bool = True,
         use_transformer: bool = False,
         unimodal: bool = True,
+        num_transformer_layers: int = 1,
     ):
         super(SurvivalModel, self).__init__()
         self.path_encoder = path_encoder
@@ -294,13 +295,14 @@ class SurvivalModel(nn.Module):
             nn.LeakyReLU(0.1),
             nn.LazyLinear(hidden_dim),
         )
-        self.transformer = nn.TransformerEncoderLayer(
+        self.transformer_layer = nn.TransformerEncoderLayer(
             d_model=hidden_dim,
             nhead=4,
             dim_feedforward=hidden_dim * 2,
             batch_first=True,
             norm_first=True,
         )
+        self.transformer_encoder = nn.TransformerEncoder(self.transformer_layer, num_layers=num_transformer_layers)
         self.cls_token = nn.Parameter(torch.randn(1, 1, hidden_dim))
         self.use_positional_encoding = use_positional_encoding
         self.use_gated_attention = use_gated_attention
@@ -344,7 +346,7 @@ class SurvivalModel(nn.Module):
             mask = torch.cat(
                 (cls_mask, mask), dim=1
             )  # shape: Batch size x (1 + Num patches)
-            path_attended = self.transformer(path_features, src_key_padding_mask=mask)
+            path_attended = self.transformer_encoder(path_features, src_key_padding_mask=mask)
             # extract cls token representation
         else:
             path_attended, _ = self.path_msa(
