@@ -66,11 +66,11 @@ class ViTHeadEncoder(nn.Module):
         self.act = nn.GELU()
 
         # The "Output" (Contraction) part
-        self.fc2 = nn.Linear(input_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, input_dim)
         self.dropout = nn.Dropout(0.0)  # Phikon default is 0.0
 
         self.output_dim = output_dim if output_dim is not None else hidden_dim
-        if self.output_dim != hidden_dim:
+        if self.output_dim != input_dim:
             self.final_fc = nn.Linear(input_dim, self.output_dim)
         else:
             self.final_fc = None
