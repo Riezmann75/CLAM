@@ -1,8 +1,10 @@
 import math
+from typing import Optional
 import pandas as pd
 import torch
 from torch import nn
 from torchvision import models
+from transformers import ViTModel
 
 
 class ResnetEncoder(nn.Module):
@@ -46,21 +48,52 @@ class ImageEncoder(nn.Module):
 
 class ViTHeadEncoder(nn.Module):
     def __init__(
-        self, input_dim: int, hidden_dim: int, output_dim: int = 128, **kwargs
+        self,
+        input_dim: int,
+        hidden_dim: int,
+        output_dim: Optional[int] = None,
+        **kwargs
     ):
         super(ViTHeadEncoder, self).__init__()
-        self.fc = nn.Sequential(
-            nn.LayerNorm(normalized_shape=input_dim),
-            nn.LazyLinear(hidden_dim),
-            nn.SELU(),
-            nn.Dropout(0.2),
-            nn.LazyLinear(input_dim),
-            nn.LazyLinear(output_dim),
-        )
+        self.model = ViTModel.from_pretrained("owkin/phikon", add_pooling_layer=False)
+        original_layer = self.model.encoder.layer[-1]
+
+        # 2. Reconstruct the architecture EXACTLY as it is in Phikon
+        self.norm = nn.LayerNorm(input_dim)
+
+        # The "Intermediate" (Expansion) part
+        self.fc1 = nn.LazyLinear(hidden_dim)
+        self.act = nn.GELU()
+
+        # The "Output" (Contraction) part
+        self.fc2 = nn.LazyLinear(hidden_dim)
+        self.dropout = nn.Dropout(0.0)  # Phikon default is 0.0
+
+        self.output_dim = output_dim if output_dim is not None else hidden_dim
+        if self.output_dim != hidden_dim:
+            self.final_fc = nn.LazyLinear(self.output_dim)
+        else:
+            self.final_fc = None
+
+        with torch.no_grad():
+            self.norm.weight.copy_(original_layer.layernorm_after.weight)
+            self.norm.bias.copy_(original_layer.layernorm_after.bias)
+            self.fc1.weight.copy_(original_layer.intermediate.dense.weight)
+            self.fc1.bias.copy_(original_layer.intermediate.dense.bias)
+            self.fc2.weight.copy_(original_layer.output.dense.weight)
+            self.fc2.bias.copy_(original_layer.output.dense.bias)
 
     def forward(self, x):
-        x = self.fc(x)
-        return x
+        x_norm = self.norm(x)
+        x_intermediate = self.fc1(x_norm)
+        x_activated = self.act(x_intermediate)
+        x_output = self.fc2(x_activated)
+        x_dropped = self.dropout(x_output)
+        output = x_dropped + x
+        if self.final_fc is not None:
+            x = self.final_fc(output)
+            return x
+        return output  # Residual connection shape: batch size * input_dim
 
 
 class GatedAttentionPooling(nn.Module):

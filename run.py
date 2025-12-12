@@ -124,7 +124,7 @@ if args.encoder == "resnet":
 elif args.encoder == "vit":
     path_enc = ImageEncoder(hidden_dim=hidden_dim)
 elif args.encoder == "vit_mlp":
-    path_enc = ViTHeadEncoder(input_dim=768, hidden_dim=768*2, output_dim=hidden_dim)
+    path_enc = ViTHeadEncoder(input_dim=768, hidden_dim=768*4, output_dim=hidden_dim)
 elif args.encoder == "plip":
     path_enc = ImageEncoder(hidden_dim=hidden_dim)
 elif args.encoder == "simclr":
