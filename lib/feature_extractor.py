@@ -115,17 +115,35 @@ class ViTMLPInputExtractor(nn.Module):
         ].layernorm_after.register_forward_hook(self._hook_mlp)
 
     def _hook_mlp(self, model, input, output):
-        self._pre_mlp_features = input[0]
+        self._pre_mlp_features = input[0].detach()
+
+    def forward(self, x):
+        _ = self.model(x.pixel_values.squeeze(1))
+
+        return self._pre_mlp_features
+
+
+class ViTTransformerInputExtractor(nn.Module):
+    def __init__(self):
+        super(ViTTransformerInputExtractor, self).__init__()
+        # Remove the final fully connected layer
+        self.image_processor = AutoImageProcessor.from_pretrained(
+            "owkin/phikon", use_fast=True
+        )
+        self.model = ViTModel.from_pretrained("owkin/phikon", add_pooling_layer=False)
+        self._pre_transformer_features = None
+        self.hook_handle = self.model.encoder.layer[-1].register_forward_hook(
+            self._hook_transformer
+        )
+
+    def _hook_transformer(self, model, input, output):
+        self._pre_transformer_features = input[0].detach()
 
     def forward(self, x):
         # shape x: (batch_size, 3, 224, 224)
         _ = self.model(x.pixel_values.squeeze(1))
 
-        full_sequence = (
-            self._pre_mlp_features
-        )  # shape (batch_size, #small_patches + 1, 768)
-
-        return full_sequence
+        return self._pre_transformer_features
 
 
 class ResNet18FeatureExtractor(nn.Module):
@@ -198,7 +216,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--feature_extractor",
         type=str,
-        choices=["resnet", "vit", "vit_mlp", "plip", "simclr"],
+        choices=["resnet", "vit", "vit_mlp", "vit_transformer", "plip", "simclr"],
         help="Feature extractor to use",
     )
     parser.add_argument(
@@ -216,8 +234,10 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if args.feature_extractor == "vit":
         model = ViTFeatureExtractor().to(device)
-    if args.feature_extractor == "vit_mlp":
+    elif args.feature_extractor == "vit_mlp":
         model = ViTMLPInputExtractor().to(device)
+    elif args.feature_extractor == "vit_transformer":
+        model = ViTTransformerInputExtractor().to(device)
     elif args.feature_extractor == "plip":
         model = PLIPFeatureExtractor().to(device)
     elif args.feature_extractor == "simclr":
@@ -241,7 +261,7 @@ if __name__ == "__main__":
             target_magnification=args.target_magnification,
             patch_level=args.patch_level,
         )
-        
+
         batch_size = 32
         batches = np.array_split(
             data["coords"][:], math.ceil(len(data["coords"][:]) / batch_size)

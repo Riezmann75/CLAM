@@ -10,12 +10,12 @@ from lib.models import (
     ResnetEncoder,
     SurvivalModel,
     ViTHeadEncoder,
+    ViTTransformers,
 )
 from lib.pre_process import load_dataset
 from lib.train import train_model_with_config
 from lib.train_utils.utils import decorate_optimizer
 import yaml
-
 import argparse
 
 torch.manual_seed(42)
@@ -50,7 +50,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--encoder",
-    choices=["resnet", "vit", "vit_mlp", "plip", "simclr"],
+    choices=["resnet", "vit", "vit_mlp", "vit_transformer", "plip", "simclr"],
     default="resnet",
     help="Type of path encoder to use",
 )
@@ -60,7 +60,9 @@ parser.add_argument(
     default="experiments/result_logs.jsonl",
     help="Path to save the training logs",
 )
-
+parser.add_argument(
+    "--num_workers", type=int, default=2, help="Number of workers to load data"
+)
 parser.add_argument(
     "--config_path",
     type=str,
@@ -74,9 +76,17 @@ parser.add_argument(
     default=2,
     help="Number of transformer layers if transformer is used",
 )
+parser.add_argument(
+    "--max_patch_per_patient",
+    type=int,
+    default=None,
+    help="Indicates if we use random sampling, and how many patch to sample for each patient"
+)
+
+parser.add_argument("--exp_desc", type=str, default=None, help="Experiment description")
 
 args = parser.parse_args()
-
+exp_desc = args.exp_desc
 batch_size = args.batch_size
 hidden_dim = args.hidden_dim
 extracted_dir = args.feature_dir
@@ -86,6 +96,9 @@ encoder_type = args.encoder
 log_path = args.log_path
 config_path = args.config_path
 num_transformer_layers = args.num_transformer_layers
+num_workers = args.num_workers
+max_patch_per_patient = args.max_patch_per_patient
+
 if config_path is not None:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
@@ -116,6 +129,10 @@ elif "vit" in encoder_type:
     assert "vit" in extracted_dir, "Feature directory does not match encoder type"
 elif "vit_mlp" in encoder_type:
     assert "vit_mlp" in extracted_dir, "Feature directory does not match encoder type"
+elif "vit_transformer" in encoder_type:
+    assert (
+        "vit_transformer" in extracted_dir
+    ), "Feature directory does not match encoder type"
 elif "plip" in encoder_type:
     assert "plip" in extracted_dir, "Feature directory does not match encoder type"
 else:
@@ -125,6 +142,8 @@ processed_data = load_dataset(
     clean_csv_path=clean_csv_path,
     extracted_dir=extracted_dir,
     batch_size=batch_size,
+    num_workers=num_workers,
+    max_patch_per_patient=max_patch_per_patient
 )
 
 if args.encoder == "resnet":
@@ -132,7 +151,9 @@ if args.encoder == "resnet":
 elif args.encoder == "vit":
     path_enc = ImageEncoder(hidden_dim=hidden_dim)
 elif args.encoder == "vit_mlp":
-    path_enc = ViTHeadEncoder(input_dim=768, hidden_dim=768*4, output_dim=hidden_dim)
+    path_enc = ViTHeadEncoder(input_dim=768, hidden_dim=768 * 4, output_dim=hidden_dim)
+elif args.encoder == "vit_transformer":
+    path_enc = ViTTransformers(input_dim=768, output_dim=hidden_dim)
 elif args.encoder == "plip":
     path_enc = ImageEncoder(hidden_dim=hidden_dim)
 elif args.encoder == "simclr":
@@ -161,7 +182,9 @@ search_space = SearchSpace.model_validate(
     }
 )
 
-grid_searcher = GridSearch(search_space, device=device, log_path=log_path)
+grid_searcher = GridSearch(
+    search_space, device=device, log_path=log_path, args=args.__dict__
+)
 grid_searcher(
     Model=SurvivalModel,
     model_init_args={

@@ -94,7 +94,35 @@ class ViTHeadEncoder(nn.Module):
         if self.final_fc is not None:
             x = self.final_fc(output)
             return x
-        return output[:, 0, :]  # return cls token representation batch size * output_dim
+        return output[
+            :, 0, :
+        ]  # return cls token representation batch size * output_dim
+
+
+class ViTTransformers(nn.Module):
+    def __init__(self, input_dim: int, output_dim: Optional[int] = None, **kwargs):
+        super(ViTTransformers, self).__init__()
+        full_model = ViTModel.from_pretrained("owkin/phikon", add_pooling_layer=False)
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.pretrained_layer = full_model.encoder.layer[-1]
+        self.final_norm = full_model.layernorm
+        self.fc = nn.Linear(768, output_dim)
+
+        if self.output_dim != self.input_dim:
+            self.final_fc = nn.Linear(self.input_dim, self.output_dim)
+        else:
+            self.final_fc = None
+
+        del full_model
+
+    def forward(self, x):
+        layer_output = self.pretrained_layer(x)
+        normalized_output = self.final_norm(layer_output)
+        cls_token = normalized_output[:, 0, :]  # shape batch size * 768
+        if self.final_fc:
+            return self.final_fc(cls_token)
+        return cls_token
 
 
 class GatedAttentionPooling(nn.Module):
@@ -257,6 +285,10 @@ class NLL(nn.Module):
 
     def forward(self, preds, failure_times, is_observed):
         # Number of observed events
+        if len(preds.shape) == 0:
+            return torch.sum(
+                torch.exp(preds) * failure_times - is_observed * preds, dim=0
+            )
         return (
             1
             / len(preds)
@@ -303,7 +335,11 @@ class SurvivalModel(nn.Module):
             batch_first=True,
             norm_first=True,
         )
-        self.transformer_encoder = nn.TransformerEncoder(self.transformer_layer, num_layers=num_transformer_layers)
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.transformer_layer,
+            num_layers=num_transformer_layers,
+            enable_nested_tensor=False,
+        )
         self.cls_token = nn.Parameter(torch.randn(1, 1, hidden_dim))
         self.use_positional_encoding = use_positional_encoding
         self.use_gated_attention = use_gated_attention
@@ -347,7 +383,9 @@ class SurvivalModel(nn.Module):
             mask = torch.cat(
                 (cls_mask, mask), dim=1
             )  # shape: Batch size x (1 + Num patches)
-            path_attended = self.transformer_encoder(path_features, src_key_padding_mask=mask)
+            path_attended = self.transformer_encoder(
+                path_features, src_key_padding_mask=mask
+            )
             # extract cls token representation
         else:
             path_attended, _ = self.path_msa(

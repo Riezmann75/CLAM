@@ -1,5 +1,7 @@
 import os
+from typing import Literal, Optional
 import h5py
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import pandas as pd
@@ -18,6 +20,8 @@ class PatientDataset(Dataset):
         h5_files: list[str],
         X,
         y,
+        mode: Literal["train", "validation"],
+        max_patch_per_patient: Optional[int] = None,
     ):
         self.extracted_dir = extracted_dir
         self.slide_ids = slide_ids
@@ -30,6 +34,8 @@ class PatientDataset(Dataset):
             col for col in self.X.columns if col not in self.clinical_cols
         ]
         self.feature_cols.remove("slide_id")
+        self.max_patch_per_patient = max_patch_per_patient
+        self.mode = mode
         self.patch_features = []
         self.coordinates = []
         for h5_file in h5_files:
@@ -48,15 +54,45 @@ class PatientDataset(Dataset):
         return len(self.slide_ids)
 
     def __getitem__(self, idx):
-        patch_features = self.patch_features[idx]
         slide_id = self.slide_ids[idx]
         slide_id = slide_id + ".svs"
         patient = self.X[self.X["slide_id"] == slide_id].iloc[0]
         patient = patient[self.feature_cols]
         patient = torch.tensor(patient.values.astype(float))
-        return (patient, patch_features, self.coordinates[idx]), torch.tensor(
-            self.y.iloc[idx].values.astype(float)
-        )
+
+        if self.max_patch_per_patient is None:
+            patch_features = self.patch_features[idx]
+            return (patient, patch_features, self.coordinates[idx]), torch.tensor(
+                self.y.iloc[idx].values.astype(float)
+            )
+        else:
+            patient_patch_features = self.patch_features[idx]
+            patient_coordinates = self.coordinates[idx]
+            if self.mode == "train":
+                num_patch = patient_patch_features.shape[0]
+                if num_patch > self.max_patch_per_patient:
+                    indices = torch.randperm(num_patch)[: self.max_patch_per_patient]
+                    indices, _ = torch.sort(indices)
+                    patch_features = patient_patch_features[indices]
+                    coordinates = []
+                    for index in indices:
+                        coordinates.append(patient_coordinates[index])
+                    return (patient, patch_features, coordinates), torch.tensor(
+                        self.y.iloc[idx].values.astype(float)
+                    )
+                else:
+                    patch_features = self.patch_features[idx]
+                    return (
+                        patient,
+                        patch_features,
+                        self.coordinates[idx],
+                    ), torch.tensor(self.y.iloc[idx].values.astype(float))
+            if self.mode == "validation":
+                patch_features = patient_patch_features[: self.max_patch_per_patient]
+                coordinates = patient_coordinates[: self.max_patch_per_patient]
+                return (patient, patch_features, coordinates), torch.tensor(
+                    self.y.iloc[idx].values.astype(float)
+                )
 
 
 def collate_fn(batch):
@@ -75,14 +111,20 @@ def collate_fn(batch):
     patches = pad_sequence(patches, batch_first=True)
     # shape: batch * max_num_patches * 2
     coordinates = pad_sequence(
-        [torch.tensor(coords) for coords in coordinates], batch_first=True
+        [torch.from_numpy(np.array(coords)) for coords in coordinates], batch_first=True
     )
 
     clinical_outcomes = torch.stack(clinical_outcomes)
     return patients, patches, coordinates, clinical_outcomes, mask
 
 
-def load_dataset(clean_csv_path: str, extracted_dir: str, batch_size=4):
+def load_dataset(
+    clean_csv_path: str,
+    extracted_dir: str,
+    batch_size=4,
+    num_workers=2,
+    max_patch_per_patient: Optional[int] = None,
+):
     df = pd.read_csv(clean_csv_path)
     h5_files = os.listdir(os.path.join(extracted_dir, "coords"))
     df_filtered = df.drop(columns=["site", "oncotree_code", "train"])
@@ -140,6 +182,8 @@ def load_dataset(clean_csv_path: str, extracted_dir: str, batch_size=4):
         h5_files=train_h5_files,
         X=X_train.reset_index(drop=True),
         y=y_train.reset_index(drop=True),
+        max_patch_per_patient=max_patch_per_patient,
+        mode="train",
     )
 
     test_dataset = PatientDataset(
@@ -148,6 +192,8 @@ def load_dataset(clean_csv_path: str, extracted_dir: str, batch_size=4):
         h5_files=test_h5_files,
         X=X_test.reset_index(drop=True),
         y=y_test.reset_index(drop=True),
+        max_patch_per_patient=max_patch_per_patient,
+        mode="validation",
     )
 
     validate_dataset = PatientDataset(
@@ -156,6 +202,8 @@ def load_dataset(clean_csv_path: str, extracted_dir: str, batch_size=4):
         h5_files=validate_h5_files,
         X=X_validate.reset_index(drop=True),
         y=y_validate.reset_index(drop=True),
+        max_patch_per_patient=max_patch_per_patient,
+        mode="validation",
     )
 
     train_loader = DataLoader(
@@ -163,21 +211,21 @@ def load_dataset(clean_csv_path: str, extracted_dir: str, batch_size=4):
         batch_size=batch_size,
         shuffle=True,
         collate_fn=collate_fn,
-        num_workers=2,
+        num_workers=num_workers,
     )
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
         shuffle=False,
         collate_fn=collate_fn,
-        num_workers=2,
+        num_workers=num_workers,
     )
     validate_loader = DataLoader(
         validate_dataset,
         batch_size=batch_size,
         shuffle=False,
         collate_fn=collate_fn,
-        num_workers=2,
+        num_workers=num_workers,
     )
 
     return {

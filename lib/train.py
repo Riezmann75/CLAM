@@ -1,5 +1,7 @@
+import pdb
 import time
 import torch
+from tqdm import tqdm
 from lib.train_utils.exception import StopTrainingError
 import numpy as np
 from torch import nn
@@ -52,7 +54,11 @@ def train_loop(dataloader, model, loss_fn, optimizer, device=None, required_grad
         preds = model(patches, patient, coordinates, mask)
         failure_times = clinical_outcomes[:, 0]
         is_observed = clinical_outcomes[:, 1]
-        loss = loss_fn(preds, failure_times, is_observed)
+        try:
+            loss = loss_fn(preds, failure_times, is_observed)
+        except Exception as e:
+            print(e)
+            pdb.set_trace()
         losses.append(loss.item() * len(patches))
         if torch.isinf(loss):
             raise StopTrainingError("Loss is Inf!")
@@ -81,7 +87,7 @@ def train_model_with_config(
 ):
     avg_losses = []
     val_losses = []
-    for _ in range(num_epoch):
+    for _ in tqdm(range(num_epoch)):
         model.train()
 
         epoch_loss = train_loop(train_loader, model, loss_fn, optimizer, device)

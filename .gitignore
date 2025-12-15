@@ -7,3 +7,4 @@ experiments/
 test.*
 pretrained_encoders/
 *.txt
+.hf_cache

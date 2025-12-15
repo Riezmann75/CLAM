@@ -25,6 +25,7 @@ class GridSearch:
         search_space: SearchSpace,
         device=None,
         log_path="experiments/result_logs.jsonl",
+        args=None,
     ):
         self.learning_rates = search_space.learning_rates
         self.optimizers = search_space.optimizers
@@ -32,6 +33,7 @@ class GridSearch:
         self.num_epochs = search_space.num_epochs
         self.device = device
         self.log_path = log_path
+        self.args = args
 
     def __call__(self, Model: nn.Module, train_fn, model_init_args=None, **kwargs):
 
@@ -81,6 +83,7 @@ class GridSearch:
                                         "lr": lr,
                                         "weight_decay": weight_decay,
                                         "num_epoch": num_epoch,
+                                        "experiment_args": self.args,
                                     },
                                     "avg_losses": avg_losses,
                                     "val_losses": val_losses,
@@ -104,6 +107,7 @@ class GridSearch:
                                         "lr": lr,
                                         "weight_decay": weight_decay,
                                         "num_epoch": num_epoch,
+                                        "experiment_args": self.args,
                                     },
                                     "avg_losses": None,
                                     "val_losses": None,
