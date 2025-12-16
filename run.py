@@ -80,7 +80,7 @@ parser.add_argument(
     "--max_patch_per_patient",
     type=int,
     default=None,
-    help="Indicates if we use random sampling, and how many patch to sample for each patient"
+    help="Indicates if we use random sampling, and how many patch to sample for each patient",
 )
 
 parser.add_argument("--exp_desc", type=str, default=None, help="Experiment description")
@@ -143,7 +143,7 @@ processed_data = load_dataset(
     extracted_dir=extracted_dir,
     batch_size=batch_size,
     num_workers=num_workers,
-    max_patch_per_patient=max_patch_per_patient
+    max_patch_per_patient=max_patch_per_patient,
 )
 
 if args.encoder == "resnet":

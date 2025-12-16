@@ -121,6 +121,8 @@ def train_model_with_config(
             clinical_outcomes = clinical_outcomes.to(device)
             mask = ~mask.to(device)  # invert mask for key_padding_mask
             preds = model(patches, patient, coordinates, mask)
+            if len(preds.shape) == 0:
+                preds = preds.view(1, -1)
             collected_preds.append(preds.cpu())
             clinical_outcomes_list.append(clinical_outcomes.cpu())
         clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
@@ -146,6 +148,8 @@ def train_model_with_config(
             clinical_outcomes = clinical_outcomes.to(device)
             mask = ~mask.to(device)  # invert mask for key_padding_mask
             preds = model(patches, patient, coordinates, mask)
+            if len(preds.shape) == 0:
+                preds = preds.view(1, -1)
             collected_preds.append(preds.cpu())
             clinical_outcomes_list.append(clinical_outcomes.cpu())
         clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
@@ -158,7 +162,7 @@ def train_model_with_config(
             clinical_outcomes_list[:, 0],
             clinical_outcomes_list[:, 1],
         )
-    
+
     # cindex on validation set
     model.eval()
     with torch.no_grad():
@@ -171,6 +175,8 @@ def train_model_with_config(
             clinical_outcomes = clinical_outcomes.to(device)
             mask = ~mask.to(device)  # invert mask for key_padding_mask
             preds = model(patches, patient, coordinates, mask)
+            if len(preds.shape) == 0:
+                preds = preds.view(1, -1)
             collected_preds.append(preds.cpu())
             clinical_outcomes_list.append(clinical_outcomes.cpu())
         clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
@@ -182,6 +188,6 @@ def train_model_with_config(
             collected_preds,
             clinical_outcomes_list[:, 0],
             clinical_outcomes_list[:, 1],
-        )  
+        )
 
     return avg_losses, val_losses, c_index_value, train_c_index_value, val_c_index_value

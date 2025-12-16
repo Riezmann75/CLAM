@@ -412,3 +412,4 @@ class SurvivalModel(nn.Module):
         )  # shape: Batch size x (2 * Feature dim)
         preds = self.fc(combined_features)  # shape: Batch size x 1
         return preds.squeeze()  # shape: Batch size
+ 
