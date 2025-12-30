@@ -58,11 +58,12 @@ class WSIPatchDataset(Dataset):
             size=(self.patch_size, self.patch_size),
         ).convert("RGB")
 
-        if self.transform:
-            patch = self.transform(patch)
+        # if self.transform:
+        #     patch = self.transform(patch)
 
         if self.processor:
             patch = self.processor(patch, return_tensors="pt")
+            patch = patch["pixel_values"].squeeze(0)
         return patch, coord
 
 
@@ -118,9 +119,9 @@ class ViTMLPInputExtractor(nn.Module):
         self._pre_mlp_features = input[0].detach()
 
     def forward(self, x):
-        _ = self.model(x.pixel_values.squeeze(1))
+        _ = self.model(x)
 
-        return self._pre_mlp_features
+        return self._pre_mlp_features[:, 0, :]
 
 
 class ViTTransformerInputExtractor(nn.Module):
@@ -141,7 +142,7 @@ class ViTTransformerInputExtractor(nn.Module):
 
     def forward(self, x):
         # shape x: (batch_size, 3, 224, 224)
-        _ = self.model(x.pixel_values.squeeze(1))
+        _ = self.model(x)
 
         return self._pre_transformer_features
 

@@ -106,9 +106,9 @@ def plot_top_configs(
     with open(log_path, "r") as f:
         result_logs = [json.loads(line) for line in f.readlines()]
         result_logs = [
-            log for log in result_logs if log.get("val_c_index") is not None
+            log for log in result_logs if log.get("test_c_index") is not None
         ]
-        result_logs = sorted(result_logs, key=lambda x: x["val_c_index"], reverse=True)
+        result_logs = sorted(result_logs, key=lambda x: x["test_c_index"], reverse=True)
         # select top 2 results
         top_k_results = result_logs[:top_k]
         plot_training_curves(experiment_path, top_k_results, y_lim=y_lim)

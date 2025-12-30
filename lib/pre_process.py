@@ -1,4 +1,5 @@
 import os
+import pdb
 from typing import Literal, Optional
 import h5py
 import numpy as np
@@ -36,19 +37,16 @@ class PatientDataset(Dataset):
         self.feature_cols.remove("slide_id")
         self.max_patch_per_patient = max_patch_per_patient
         self.mode = mode
-        self.patch_features = []
-        self.coordinates = []
+        self.h5_files_paths = []
+        self.features_paths = []
         for h5_file in h5_files:
             assert os.path.exists(h5_file), f"H5 file {h5_file} does not exist."
         for slide_id in slide_ids:
             # load tensor from extracted features
             features_dir = os.path.join(self.extracted_dir, "features")
             coords_dir = os.path.join(self.extracted_dir, "coords")
-            data = h5py.File(os.path.join(coords_dir, f"{slide_id}.h5"), "r")
-            extracted_path = os.path.join(features_dir, f"{slide_id}.pt")
-            self.coordinates.append(data["coords"][:])
-            features = torch.load(extracted_path)
-            self.patch_features.append(features)
+            self.h5_files_paths.append(os.path.join(coords_dir, f"{slide_id}.h5"))
+            self.features_paths.append(os.path.join(features_dir, f"{slide_id}.pt"))
 
     def __len__(self):
         return len(self.slide_ids)
@@ -61,13 +59,18 @@ class PatientDataset(Dataset):
         patient = torch.tensor(patient.values.astype(float))
 
         if self.max_patch_per_patient is None:
-            patch_features = self.patch_features[idx]
-            return (patient, patch_features, self.coordinates[idx]), torch.tensor(
+            features_path = self.features_paths[idx]
+            patch_features = torch.load(features_path)
+            coordinates = h5py.File(self.h5_files_paths[idx], "r")
+            coordinates = coordinates["coords"][:]
+            return (patient, patch_features, coordinates), torch.tensor(
                 self.y.iloc[idx].values.astype(float)
             )
         else:
-            patient_patch_features = self.patch_features[idx]
-            patient_coordinates = self.coordinates[idx]
+            features_path = self.features_paths[idx]
+            patient_patch_features = torch.load(features_path)
+            patient_coordinates = h5py.File(self.h5_files_paths[idx], "r")
+            patient_coordinates = patient_coordinates["coords"][:]
             if self.mode == "train":
                 num_patch = patient_patch_features.shape[0]
                 if num_patch > self.max_patch_per_patient:
@@ -75,17 +78,15 @@ class PatientDataset(Dataset):
                     indices, _ = torch.sort(indices)
                     patch_features = patient_patch_features[indices]
                     coordinates = []
-                    for index in indices:
-                        coordinates.append(patient_coordinates[index])
+                    coordinates.append(patient_coordinates[indices])
                     return (patient, patch_features, coordinates), torch.tensor(
                         self.y.iloc[idx].values.astype(float)
                     )
                 else:
-                    patch_features = self.patch_features[idx]
                     return (
                         patient,
-                        patch_features,
-                        self.coordinates[idx],
+                        patient_patch_features,
+                        patient_coordinates,
                     ), torch.tensor(self.y.iloc[idx].values.astype(float))
             if self.mode == "validation":
                 patch_features = patient_patch_features[: self.max_patch_per_patient]
@@ -103,15 +104,15 @@ def collate_fn(batch):
         coordinates.append(coords)
         clinical_outcomes.append(clinical_outcome)
     max_num_patches = max([patch.shape[0] for patch in patches])
-    mask = torch.zeros(len(patches), max_num_patches, dtype=torch.bool)
+    mask = torch.ones(len(patches), max_num_patches, dtype=torch.bool)
     for i, patch in enumerate(patches):
-        mask[i, : patch.shape[0]] = True
+        mask[i, : patch.shape[0]] = 0
 
     patients = torch.stack(patients)
     patches = pad_sequence(patches, batch_first=True)
     # shape: batch * max_num_patches * 2
     coordinates = pad_sequence(
-        [torch.from_numpy(np.array(coords)) for coords in coordinates], batch_first=True
+        [torch.from_numpy(coords) for coords in coordinates], batch_first=True
     )
 
     clinical_outcomes = torch.stack(clinical_outcomes)
@@ -127,12 +128,17 @@ def load_dataset(
 ):
     df = pd.read_csv(clean_csv_path)
     h5_files = os.listdir(os.path.join(extracted_dir, "coords"))
-    df_filtered = df.drop(columns=["site", "oncotree_code", "train"])
+    df_filtered = df.drop(columns=["site", "oncotree_code"])
+    train_df = df[df["train"] == 1]
+    test_df = df[df["train"] == 0]
+    train_df = train_df.drop(columns=["train"])
+    test_df = test_df.drop(columns=["train"])
     # get the patients in file_ids
     wsi_path = "./wsi_files/BLCA/"
     slide_ids = [
         file_id for file_id in os.listdir(wsi_path) if file_id.endswith(".svs")
     ]
+    df_filtered = df_filtered.drop(columns=["train"])
     df_filtered = df_filtered[df_filtered["slide_id"].isin(slide_ids)]
     clinical_cols = ["survival_months", "censorship"]
     feature_cols = [col for col in df_filtered.columns if col not in clinical_cols]
@@ -143,12 +149,18 @@ def load_dataset(
         if col not in categorical_cols:
             numeric_cols.append(col)
 
-    X = df_filtered[feature_cols]
-    y = df_filtered[clinical_cols]
+    # X = df_filtered[feature_cols]
+    # y = df_filtered[clinical_cols]
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y["censorship"]
-    )
+    X_train = train_df[feature_cols]
+    y_train = train_df[clinical_cols]
+    X_test = test_df[feature_cols]
+    y_test = test_df[clinical_cols]
+
+    # X_train, X_test, y_train, y_test = train_test_split(
+    #     X, y, test_size=0.2, random_state=42, stratify=y["censorship"]
+    # )
+
     X_train, X_validate, y_train, y_validate = train_test_split(
         X_train, y_train, test_size=0.1, random_state=42, stratify=y_train["censorship"]
     )

@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from typing import Optional
 from pydantic import BaseModel
 from torch import nn
 import torch
@@ -26,6 +27,8 @@ class GridSearch:
         device=None,
         log_path="experiments/result_logs.jsonl",
         args=None,
+        is_model_saved=True,
+        model_name: Optional[str] = None,
     ):
         self.learning_rates = search_space.learning_rates
         self.optimizers = search_space.optimizers
@@ -34,6 +37,9 @@ class GridSearch:
         self.device = device
         self.log_path = log_path
         self.args = args
+        self.is_model_saved = is_model_saved
+        self.model_name = model_name
+        assert self.is_model_saved == bool(self.model_name)
 
     def __call__(self, Model: nn.Module, train_fn, model_init_args=None, **kwargs):
 
@@ -92,10 +98,9 @@ class GridSearch:
                                     "val_c_index": val_c_index_value,
                                 }
                             )
+                            if self.is_model_saved:
+                                self.save_model(model)
                         except StopTrainingError as e:
-                            # print(
-                            #     f"Config: {lr}, {parse_optimizer(str(configured_optimizer)).get('name')}, {weight_decay}, {num_epoch} stopped training due to {e}\n"
-                            # )
                             self.write_training_log(
                                 {
                                     "config": {
@@ -127,3 +132,9 @@ class GridSearch:
             open(log_path, "x").close()
         with open(log_path, "a") as f:
             f.write(json.dumps(log) + "\n")
+
+    def save_model(self, model):
+        current_path = os.getcwd()
+        os.makedirs(os.path.join(current_path, "experiments"), exist_ok=True)
+        log_path = os.path.join(current_path, self.model_name)
+        torch.save(model.state_dict(), log_path)

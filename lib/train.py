@@ -49,8 +49,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device=None, required_grad
         patient = patient.to(device)
         coordinates = coordinates.to(device)
         clinical_outcomes = clinical_outcomes.to(device)
-        mask = ~mask.to(device)  # invert mask for key_padding_mask
-        # t1 = time.time()
+        mask = mask.to(device)
         preds = model(patches, patient, coordinates, mask)
         failure_times = clinical_outcomes[:, 0]
         is_observed = clinical_outcomes[:, 1]
@@ -58,7 +57,6 @@ def train_loop(dataloader, model, loss_fn, optimizer, device=None, required_grad
             loss = loss_fn(preds, failure_times, is_observed)
         except Exception as e:
             print(e)
-            pdb.set_trace()
         losses.append(loss.item() * len(patches))
         if torch.isinf(loss):
             raise StopTrainingError("Loss is Inf!")
@@ -119,10 +117,10 @@ def train_model_with_config(
             patient = patient.to(device)
             coordinates = coordinates.to(device)
             clinical_outcomes = clinical_outcomes.to(device)
-            mask = ~mask.to(device)  # invert mask for key_padding_mask
+            mask = mask.to(device)  # invert mask for key_padding_mask
             preds = model(patches, patient, coordinates, mask)
             if len(preds.shape) == 0:
-                preds = preds.view(1, -1)
+                preds = preds.view(1)
             collected_preds.append(preds.cpu())
             clinical_outcomes_list.append(clinical_outcomes.cpu())
         clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
@@ -146,10 +144,10 @@ def train_model_with_config(
             patient = patient.to(device)
             coordinates = coordinates.to(device)
             clinical_outcomes = clinical_outcomes.to(device)
-            mask = ~mask.to(device)  # invert mask for key_padding_mask
+            mask = mask.to(device)  # invert mask for key_padding_mask
             preds = model(patches, patient, coordinates, mask)
             if len(preds.shape) == 0:
-                preds = preds.view(1, -1)
+                preds = preds.view(1)
             collected_preds.append(preds.cpu())
             clinical_outcomes_list.append(clinical_outcomes.cpu())
         clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)
@@ -173,10 +171,10 @@ def train_model_with_config(
             patient = patient.to(device)
             coordinates = coordinates.to(device)
             clinical_outcomes = clinical_outcomes.to(device)
-            mask = ~mask.to(device)  # invert mask for key_padding_mask
+            mask = mask.to(device)  # invert mask for key_padding_mask
             preds = model(patches, patient, coordinates, mask)
             if len(preds.shape) == 0:
-                preds = preds.view(1, -1)
+                preds = preds.view(1)
             collected_preds.append(preds.cpu())
             clinical_outcomes_list.append(clinical_outcomes.cpu())
         clinical_outcomes_list = torch.concat(clinical_outcomes_list, dim=0)

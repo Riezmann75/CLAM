@@ -334,6 +334,7 @@ class SurvivalModel(nn.Module):
             dim_feedforward=hidden_dim * 2,
             batch_first=True,
             norm_first=True,
+            activation=lambda x: nn.functional.leaky_relu(x, negative_slope=0.01),
         )
         self.transformer_encoder = nn.TransformerEncoder(
             self.transformer_layer,
@@ -348,6 +349,25 @@ class SurvivalModel(nn.Module):
             self.use_gated_attention + self.use_transformer <= 1
         ), "Cannot use both gated attention and transformer cls token pooling."
         self.unimodal = unimodal
+        self._pre_fc_features = None
+        self._post_transformer = None
+        self.hook_handle = self.fc.register_forward_hook(self._hook_mlp)
+        self.transformer_hook = self.transformer_encoder.register_forward_hook(
+            self._hook_transformer
+        )
+        self.output = nn.Sequential(
+            nn.LazyLinear(self.hidden_dim * 4),
+            nn.LazyLinear(self.hidden_dim),
+        )
+        self.layer_norm = nn.LayerNorm(128)
+        self.batch_norm = nn.BatchNorm1d(128)
+
+    def _hook_mlp(self, model, input, output):
+        self._pre_fc_features = input[0].detach()
+
+    def _hook_transformer(self, model, input, output):
+        self._post_transformer = output.detach()
+        self._pre_transformer = input[0].detach()
 
     def forward(self, path_x, geno_x, coordinates, mask):
         # path_x shape: Batch size x #patches x Feature dim
@@ -402,6 +422,7 @@ class SurvivalModel(nn.Module):
             path_representation = path_attended.mean(dim=1)
 
         if self.unimodal:
+            path_representation = self.output(path_representation)
             preds = self.fc(path_representation)  # shape: Batch size x 1
             return preds.squeeze()  # shape: Batch size
         geno_features = self.geno_encoder(geno_x)  # shape: Batch size x Feature dim
@@ -412,4 +433,3 @@ class SurvivalModel(nn.Module):
         )  # shape: Batch size x (2 * Feature dim)
         preds = self.fc(combined_features)  # shape: Batch size x 1
         return preds.squeeze()  # shape: Batch size
- 

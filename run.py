@@ -82,6 +82,18 @@ parser.add_argument(
     default=None,
     help="Indicates if we use random sampling, and how many patch to sample for each patient",
 )
+parser.add_argument(
+    "--is_model_saved",
+    type=bool,
+    default=False,
+    help="Indicates if we saved the train model or not",
+)
+parser.add_argument(
+    "--model_name",
+    type=str,
+    default=None,
+    help="model save name"
+)
 
 parser.add_argument("--exp_desc", type=str, default=None, help="Experiment description")
 
@@ -98,6 +110,8 @@ config_path = args.config_path
 num_transformer_layers = args.num_transformer_layers
 num_workers = args.num_workers
 max_patch_per_patient = args.max_patch_per_patient
+is_model_saved = args.is_model_saved
+model_name = args.model_name
 
 if config_path is not None:
     with open(config_path, "r") as f:
@@ -173,7 +187,7 @@ loss = NLL()
 
 search_space = SearchSpace.model_validate(
     {
-        "learning_rates": [6e-5, 2e-4, 3e-4, 1e-3, 5e-3],
+        "learning_rates": [2e-4],  # 6e-5, 2e-4, 3e-4, 1e-3,
         "weight_decays": [1e-4],
         "optimizers": [
             decorate_optimizer(torch.optim.Adam),
@@ -183,7 +197,12 @@ search_space = SearchSpace.model_validate(
 )
 
 grid_searcher = GridSearch(
-    search_space, device=device, log_path=log_path, args=args.__dict__
+    search_space,
+    device=device,
+    log_path=log_path,
+    args=args.__dict__,
+    is_model_saved=is_model_saved,
+    model_name=model_name,
 )
 grid_searcher(
     Model=SurvivalModel,

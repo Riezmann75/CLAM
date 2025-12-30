@@ -3,9 +3,9 @@
 #PBS -l select=1:ngpus=1:mem=32GB
 #PBS -q normal
 #PBS -P 12004268
-#PBS -N finetuning_vit_transformer
+#PBS -N 1024_finetuning_vit_transformer
 #PBS -j oe
-#PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/transformers/finetuning_vit_transformer.txt
+#PBS -o /home/users/ntu/giabaoca/myProject-12004268/giabao/CLAM/log/finetuning_vit/1024_finetuning_vit_transformer.txt
 #PBS -M giabao.cao@ntu.edu.sg
 #PBS -m abe
 
@@ -26,14 +26,16 @@ export HF_HOME=.hf_cache
 
 # 5. Run the Training Script
 python run.py \
-    --batch_size 2 \
+    --batch_size 8 \
     --num_transformer_layers 2 \
     --num_workers 2 \
+    --max_patch_per_patient 300 \
     --config_path yaml/transformers/model_config_pe.yaml \
-    --hidden_dim 128 \
+    --hidden_dim 1024 \
     --feature_dir wsi_patches/BLCA/features/BLCA_vit_transformer \
     --h5_dir wsi_patches/BLCA/patches/ \
     --clean_csv_path dataset_csv/tcga_blca_all_clean.csv \
     --encoder vit_transformer \
     --log_path experiments/vit_finetuning/result_vit_transformer_pe.jsonl \
-    --exp_desc "Fine tune last transformer layer of pretrained ViT, with PE"
+    --exp_desc "Fine tune last transformer layer of pretrained ViT, with 1024 hidden dim, random 300 images" \
+    --is_model_saved false
