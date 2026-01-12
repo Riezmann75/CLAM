@@ -97,8 +97,7 @@ class ViTFeatureExtractor(nn.Module):
 
     def forward(self, x):
         # shape x: (batch_size, 3, 224, 224)
-        x = self.image_processor(x, return_tensors="pt")
-        outputs = self.model(**x)
+        outputs = self.model(x)
         x = outputs.last_hidden_state[:, 0, :]  # (batch_size, 768) shape
         return x
 

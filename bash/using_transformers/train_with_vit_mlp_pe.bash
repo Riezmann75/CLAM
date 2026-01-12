@@ -27,15 +27,13 @@ export HF_HOME=.hf_cache
 # 5. Run the Training Script
 python run.py \
     --batch_size 16 \
-    --num_transformer_layers 1 \
+    --num_transformer_layers 2 \
     --config_path yaml/transformers/model_config_pe.yaml \
-    --hidden_dim 512 \
+    --hidden_dim 128 \
     --num_workers 4 \
     --feature_dir wsi_patches/BLCA/features/BLCA_vit_mlp_20x \
     --h5_dir wsi_patches/BLCA/patches/ \
     --clean_csv_path dataset_csv/tcga_blca_all_clean.csv \
     --encoder vit_mlp \
     --log_path experiments/vit_finetuning/result_vit_mlp_pe_new_pe.jsonl \
-    --exp_desc "Fine tune last MLP ViT with PE, hidden dim 512, 1 transformer encoders" \
-    --is_model_saved true \
-    --model_name finetune_last_mlp.pth
+    --exp_desc "Fine tune last MLP ViT with PE, hidden dim 1024, 2 transformer encoders" \

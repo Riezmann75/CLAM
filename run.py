@@ -187,7 +187,7 @@ loss = NLL()
 
 search_space = SearchSpace.model_validate(
     {
-        "learning_rates": [2e-4],  # 6e-5, 2e-4, 3e-4, 1e-3,
+        "learning_rates": [6e-5, 2e-4, 3e-4, 1e-3],  # 6e-5, 2e-4, 3e-4, 1e-3,
         "weight_decays": [1e-4],
         "optimizers": [
             decorate_optimizer(torch.optim.Adam),

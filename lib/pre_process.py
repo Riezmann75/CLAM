@@ -77,8 +77,7 @@ class PatientDataset(Dataset):
                     indices = torch.randperm(num_patch)[: self.max_patch_per_patient]
                     indices, _ = torch.sort(indices)
                     patch_features = patient_patch_features[indices]
-                    coordinates = []
-                    coordinates.append(patient_coordinates[indices])
+                    coordinates = patient_coordinates[indices]
                     return (patient, patch_features, coordinates), torch.tensor(
                         self.y.iloc[idx].values.astype(float)
                     )
