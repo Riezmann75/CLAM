@@ -350,11 +350,6 @@ class SurvivalModel(nn.Module):
         ), "Cannot use both gated attention and transformer cls token pooling."
         self.unimodal = unimodal
         self._pre_fc_features = None
-        self._post_transformer = None
-        self.hook_handle = self.fc.register_forward_hook(self._hook_mlp)
-        self.transformer_hook = self.transformer_encoder.register_forward_hook(
-            self._hook_transformer
-        )
         self.output = nn.Sequential(
             nn.LazyLinear(self.hidden_dim * 4),
             nn.LazyLinear(self.hidden_dim),
@@ -362,14 +357,7 @@ class SurvivalModel(nn.Module):
         self.layer_norm = nn.LayerNorm(128)
         self.batch_norm = nn.BatchNorm1d(128)
 
-    def _hook_mlp(self, model, input, output):
-        self._pre_fc_features = input[0].detach()
-
-    def _hook_transformer(self, model, input, output):
-        self._post_transformer = output.detach()
-        self._pre_transformer = input[0].detach()
-
-    def forward(self, path_x, geno_x, coordinates, mask):
+    def embed(self, path_x, geno_x, coordinates, mask):
         # path_x shape: Batch size x #patches x Feature dim
         # coordinates shape: Batch size x #patches x 2
 
@@ -423,13 +411,15 @@ class SurvivalModel(nn.Module):
 
         if self.unimodal:
             path_representation = self.output(path_representation)
-            preds = self.fc(path_representation)  # shape: Batch size x 1
-            return preds.squeeze()  # shape: Batch size
+            return path_representation
         geno_features = self.geno_encoder(geno_x)  # shape: Batch size x Feature dim
         geno_features = geno_features.view(B, -1)  # shape: Batch size x Feature dim
         # concat path and genomic features
         combined_features = torch.cat(
             (path_representation, geno_features), dim=1
         )  # shape: Batch size x (2 * Feature dim)
-        preds = self.fc(combined_features)  # shape: Batch size x 1
+        return combined_features
+
+    def forward(self, embedded_features):
+        preds = self.fc(embedded_features)  # shape: Batch size x 1
         return preds.squeeze()  # shape: Batch size

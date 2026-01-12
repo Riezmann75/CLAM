@@ -50,13 +50,29 @@ def train_loop(dataloader, model, loss_fn, optimizer, device=None, required_grad
         coordinates = coordinates.to(device)
         clinical_outcomes = clinical_outcomes.to(device)
         mask = mask.to(device)
-        preds = model(patches, patient, coordinates, mask)
-        failure_times = clinical_outcomes[:, 0]
-        is_observed = clinical_outcomes[:, 1]
-        try:
-            loss = loss_fn(preds, failure_times, is_observed)
-        except Exception as e:
-            print(e)
+        # preds = model(patches, patient, coordinates, mask)
+        embedded_features = model.embed(patches, patient, coordinates, mask)
+        mixed_features, mixed_clinical_outcomes, lam = mixup_dataset(
+            embedded_features,
+            clinical_outcomes,
+            alpha=0.02,
+            device=device,
+        )
+        preds = model.fc(mixed_features).squeeze()
+        # failure_times = clinical_outcomes[:, 0]
+        # is_observed = clinical_outcomes[:, 1]
+        # try:
+        #     loss = loss_fn(preds, failure_times, is_observed)
+        # except Exception as e:
+        #     print(e)
+        
+        # because the features computed as lambda * x_i + (1 - lambda) * x_j
+        # the loss is computed as lambda * L(pred, y_i) + (1 - lambda) * L(pred, y_j)
+        loss = lam * loss_fn(
+            preds, mixed_clinical_outcomes[:, 0, 0], mixed_clinical_outcomes[:, 0, 1]
+        ) + (1 - lam) * loss_fn(
+            preds, mixed_clinical_outcomes[:, 1, 0], mixed_clinical_outcomes[:, 1, 1]
+        )
         losses.append(loss.item() * len(patches))
         if torch.isinf(loss):
             raise StopTrainingError("Loss is Inf!")
